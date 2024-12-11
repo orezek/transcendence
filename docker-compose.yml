@@ -1,0 +1,8 @@
+services:
+  ruby-service:
+    build:
+      context: ./srcs/auth_service
+      dockerfile: Dockerfile
+    container_name: auth_service  # Name your container
+    volumes:
+      - ./srcs/auth_service:/usr/src/app  # For development - do not rebuild just restart the container
