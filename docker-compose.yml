@@ -3,6 +3,8 @@ services:
     build:
       context: ./srcs/auth_service
       dockerfile: Dockerfile
-    container_name: auth_service  # Name your container
+    container_name: auth_service
+    ports:
+      - 80:4567
     volumes:
       - ./srcs/auth_service:/usr/src/app  # For development - do not rebuild just restart the container
