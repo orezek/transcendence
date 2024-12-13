@@ -5,6 +5,24 @@ services:
       dockerfile: Dockerfile
     container_name: auth_service
     ports:
-      - 80:4567
+      - 4567:4567
     volumes:
-      - ./srcs/auth_service:/usr/src/app  # For development - do not rebuild just restart the container
+      - ./srcs/auth_service:/usr/src/app
+    networks:
+      - transcendence
+
+  proxy-service:
+    build:
+      context: ./srcs/proxy_service
+      dockerfile: Dockerfile
+    container_name: proxy_service
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./srcs/proxy_service/static:/static
+    networks:
+      - transcendence
+networks:
+  transcendence:
+    driver: bridge

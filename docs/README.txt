@@ -1,10 +1,32 @@
-To learn Ruby just:
+NGINX is now serving data - static data come directly by NGINX
+Other from Sinatra - auth_service
 
-Run docker compose command: like so:
-docker compose build
-docker compose up
+API/Frontend
 
-In the directory of the auth_service you can edit the aut_service.rb file
-to whatever you want and run docker compose again. The volume should contain
-the file, so no re-build. Just re-run it. Like so:
-docker compose up
+Landing Page
+	*Welcome to Transcendence + links to reg and login
+	*Login could just be modal overlay
+Registration form + verification in the front end
+	*Username / 16 char
+	*Password / 32 char
+	*Email / email field - unique identifier
+	*Foto/Avatar
+Login form
+	*Username/email
+	*Password
+	*OAuth
+	* ….
+User Info
+	* All from registration DB
+
+
+
+URLs;
+http://localhost/api/auth/player-info?id=1
+http://localhost/api/auth/player-info?id=2
+http://localhost/
+
+Static Data:
+http://localhost/static/transcendence.jpg
+
+
