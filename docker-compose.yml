@@ -4,8 +4,6 @@ services:
       context: ./srcs/auth_service
       dockerfile: Dockerfile
     container_name: auth_service
-    ports:
-      - 4567:4567
     volumes:
       - ./srcs/auth_service:/usr/src/app
     networks:
@@ -23,6 +21,22 @@ services:
       - ./srcs/proxy_service/static:/static
     networks:
       - transcendence
+
+  db-service:
+    build:
+      context: ./srcs/db_service
+      dockerfile: Dockerfile
+    container_name: db_service
+    restart: always
+    environment:
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: securepassword
+      POSTGRES_DB: auth_db
+    volumes:
+      - ./srcs/db_service/init:/docker-entrypoint-initdb.d
+    networks:
+      - transcendence
+
 networks:
   transcendence:
     driver: bridge
