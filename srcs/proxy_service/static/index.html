@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ft_transcendence - Surprise</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        header {
+            background-color: #4caf50;
+            color: white;
+            padding: 1em 0;
+            text-align: center;
+        }
+        section {
+            padding: 2em;
+            max-width: 800px;
+            margin: auto;
+        }
+        .image-section {
+            margin-top: 2em;
+            text-align: center;
+        }
+        .image-section img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .api-section {
+            margin-top: 2em;
+            padding: 1em;
+            background-color: #e3f2fd;
+            border: 1px solid #90caf9;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Welcome to ft_transcendence</h1>
+    </header>
+
+    <section>
+        <h2>Surprise!</h2>
+        <p>This project is about doing something you’ve never done before. Remind yourself of the beginning of your journey in computer science. Look at you now. Time to shine!</p>
+        <p><strong>Version:</strong> 15</p>
+
+        <!-- Image Section -->
+        <div class="image-section">
+            <h3>Project Highlight</h3>
+            <img src="/static/transcendence.jpg" alt="Transcendence" />
+        </div>
+
+        <!-- API Section -->
+        <div class="api-section">
+            <h3>API Response</h3>
+            <div id="api-data">Loading player information...</div>
+        </div>
+    </section>
+
+    <script>
+        // Fetch data from the API
+        fetch('/api/auth/player-info')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const apiData = document.getElementById('api-data');
+                apiData.innerHTML = ''; // Clear previous content
+
+                // Iterate through the users and create rectangles
+                data.forEach(player => {
+                    const playerDiv = document.createElement('div');
+                    playerDiv.style.border = '1px solid #ccc';
+                    playerDiv.style.margin = '10px 0';
+                    playerDiv.style.padding = '10px';
+                    playerDiv.style.borderRadius = '8px';
+                    playerDiv.style.backgroundColor = '#f9f9f9';
+
+                    playerDiv.innerHTML = `
+                        <strong>Player Information:</strong><br>
+                        ID: ${player.id}<br>
+                        Name: ${player.username}<br>
+                        Email: ${player.email}<br>
+                        <img src="${player.avatar}" alt="${player.username}'s avatar" width="100" />
+                    `;
+
+                    apiData.appendChild(playerDiv);
+                });
+            })
+            .catch(error => {
+                document.getElementById('api-data').textContent = `Error: ${error.message}`;
+            });
+    </script>
+</body>
+</html>
