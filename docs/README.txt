@@ -31,10 +31,19 @@ http://localhost/static/transcendence.jpg
 
 Post:
 http://localhost/api/auth/register
+
+To test this in Postman:
+
+Set the Method: POST.
+Enter the URL: http://localhost/api/auth/register.
+Headers:
+Content-Type: application/json.
+Body:
+insert as Raw or json
 {
-  "username": "player1123",
+  "username": "player123",
   "password": "securepassword123",
-  "email": "player1@example.com",
+  "email": "player@example.com",
   "avatar": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
 }
 
