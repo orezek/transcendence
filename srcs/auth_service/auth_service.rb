@@ -12,6 +12,11 @@ def connect_to_db
   )
 end
 
+PLAYERS = {
+  1 => { id: 1, username: 'player_one', email: 'player1@example.com', score: 1200 },
+  2 => { id: 2, username: 'player_two', email: 'player2@example.com', score: 1500 }
+}
+
 # Get player information
 get '/api/auth/player-info' do
   # Parse the player ID from query parameters
