@@ -1,0 +1,17 @@
+What all can nginx do?
+
+Serve static data
+Reverse proxy | proxy
+Client request rate limiting
+Load Balancing
+
+
+Pooling Mechanism in NGINX
+NGINX uses an event-driven, asynchronous, and non-blocking architecture to handle multiple simultaneous connections efficiently. Its pooling mechanism relies on:
+
+Worker Processes: NGINX spawns one or more worker processes, each capable of handling thousands of connections.
+Connection Pooling: Each worker uses an event loop with efficient mechanisms like:
+epoll on Linux.
+kqueue on FreeBSD/macOS.
+select or poll as fallbacks.
+Connections are pooled in the worker's event loop, minimizing overhead for creating and destroying connections repeatedly.
