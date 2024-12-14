@@ -1,0 +1,18 @@
+Swagger - Swagger UI allows anyone — be it your development team or your end consumers — to visualize and interact with the API’s resources without having any of the implementation logic in place. It’s automatically generated from your OpenAPI (formerly known as Swagger) Specification, with the visual documentation making it easy for back end implementation and client side consumption.
+- more info at https://github.com/swagger-api/swagger-ui
+- demo: https://petstore.swagger.io/
+- needs to be implemented with backend Ruby - swagger-blocks gem? https://github.com/fotinakis/swagger-blocks 
+- I (m-bartos) tried to implement basic functionality to our Ruby API, but I was not successful. I need to study Ruby and the gems more deeply. I guess the Swagger UI could be another docker container in our infrastructure.
+
+Commit message formating - conventinal commits - https://www.conventionalcommits.org/en/v1.0.0/
+- better visualisation of conventionalcommits on github via google chrome extension - https://chromewebstore.google.com/detail/refined-github/hlepfoohegkhhmjieoechaddaejaokhf?hl=en
+- examples:
+- feat(api): add authentication endpoints
+- fix(api): auth endpoints
+- chore(api): rename variable in auth endpoint
+
+Database inspection
+- I (m-bartos) am testing DataGrip by JetBrains
+
+What tools do we need?
+- Some visualisation of the infrastrucutre - containers, main functionality of the container, dependencies, databases etc.
