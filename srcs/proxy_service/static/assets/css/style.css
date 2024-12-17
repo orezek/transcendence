@@ -1,0 +1,26 @@
+html{
+    padding: 0px;
+    margin: 0px;
+	text-align: center;
+	font-size: 1.2rem;
+}
+body{
+    padding: 0px;
+    margin: 0px;
+    background-color: #ffffff;
+    font-family: "Genos", sans-serif; font-weight: 100;
+	font-size: 1.2rem;
+}
+.nav{
+    font-family: "Genos", sans-serif; font-weight: 100;
+    font-size: 1.5rem;
+    font-weight: 300;
+    white-space: nowrap;
+}
+.nav-link:hover{
+    background-color: rgba(128, 128, 128, 0.1);
+}
+#app{
+    padding: 0px;
+    margin: 0px auto;
+}

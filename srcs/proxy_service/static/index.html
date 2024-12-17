@@ -3,104 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ft_transcendence - Surprise</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
-        }
-        header {
-            background-color: #4caf50;
-            color: white;
-            padding: 1em 0;
-            text-align: center;
-        }
-        section {
-            padding: 2em;
-            max-width: 800px;
-            margin: auto;
-        }
-        .image-section {
-            margin-top: 2em;
-            text-align: center;
-        }
-        .image-section img {
-            max-width: 100%;
-            height: auto;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        .api-section {
-            margin-top: 2em;
-            padding: 1em;
-            background-color: #e3f2fd;
-            border: 1px solid #90caf9;
-            border-radius: 8px;
-        }
-    </style>
+    <title>Transcendence 42</title>
+    <link href="https://fonts.googleapis.com/css2?family=Genos:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
 </head>
-<body>
-    <header>
-        <h1>Welcome to ft_transcendence</h1>
-    </header>
-
-    <section>
-        <h2>Surprise!</h2>
-        <p>This project is about doing something you’ve never done before. Remind yourself of the beginning of your journey in computer science. Look at you now. Time to shine!</p>
-        <p><strong>Version:</strong> 15</p>
-
-        <!-- Image Section -->
-        <div class="image-section">
-            <h3>Project Highlight</h3>
-            <img src="./images/transcendence.jpg" alt="Transcendence" />
+<body id="wholeBody">
+    <nav class="navbar navbar-expand-md nav align-items-center" id="mainNav" hidden>
+        <div class="container-xl border-bottom">
+            <div class="collapse navbar-collapse justify-content-end align-center text-uppercase">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#home">Home</a>
+                    </li>
+                    <li class="nav-item"></li>
+                        <a class="nav-link" href="#players">Player's Section</a>
+                    </li>
+                    <li class="nav-item"></li>
+                        <a class="nav-link" href="#registration">Registration</a>
+                    </li>
+                </ul>
+            </div>
         </div>
+    </nav>
 
-        <!-- API Section -->
-        <div class="api-section">
-            <h3>API Response</h3>
-            <div id="api-data">Loading player information...</div>
-        </div>
-    </section>
 
-    <script>
-        // Fetch data from the API
-        fetch('/api/auth/player-info')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                const apiData = document.getElementById('api-data');
-                apiData.innerHTML = ''; // Clear previous content
 
-                // Iterate through the users and create rectangles
-                data.forEach(player => {
-                    const playerDiv = document.createElement('div');
-                    playerDiv.style.border = '1px solid #ccc';
-                    playerDiv.style.margin = '10px 0';
-                    playerDiv.style.padding = '10px';
-                    playerDiv.style.borderRadius = '8px';
-                    playerDiv.style.backgroundColor = '#f9f9f9';
+    <div class="card" id="loginPage">
+        <article class="card-body mx-auto" style="max-width: 400px;">
+            <h4 class="card-title mt-3 text-center">Create Account</h4>
+            <p class="text-center">Get started with your free account</p>
+            <form id="registerForm">
+                <!-- nickname -->
+                <div class="form-group input-group" >
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"> <i class="bi bi-emoji-sunglasses"></i> </span>
+                    </div>
+                    <input name="nickName" class="form-control" placeholder="Your call sign" type="text" maxlength="16" required autofocus>
+                </div> 
+                <!-- password-->
+                <div class="form-group input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"> <i class="bi bi-lock"></i> </span>
+                    </div>
+                    <input name="password" class="form-control" placeholder="Create password" type="password" maxlength="32" required>
+                </div>
+                <!-- password confirmation -->
+                <div class="form-group input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"> <i class="bi bi-lock-fill"></i> </span>
+                    </div>
+                    <input class="form-control" placeholder="Repeat password" type="password" required>
+                </div> 
+                
+                <!-- email -->        
+                <div class="form-group input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"> <i class="bi bi-envelope"></i> </span>
+                    </div>
+                    <input name="email" class="form-control" placeholder="Email address" type="email" required>
+                </div>
+                
+                <!-- phone number
+                <div class="form-group input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"> <i class="bi bi-telephone"></i> </span>
+                    </div>
+                    <select class="custom-select" style="max-width: 120px;">
+                        <option selected="">+042</option>
+                        <option value="1">+042</option>
+                        <option value="2">+198</option>
+                        <option value="3">+701</option>
+                    </select>
+                    <input name="phone" class="form-control" placeholder="Phone number" type="tel">
+                </div> -->
 
-                    playerDiv.innerHTML = `
-                        <strong>Player Information:</strong><br>
-                        ID: ${player.id}<br>
-                        Name: ${player.username}<br>
-                        Email: ${player.email}<br>
-                        <img src="${player.avatar}" alt="${player.username}'s avatar" width="100" />
-                    `;
+                 <!-- avatar image -->
+                <label for="formFile">Choose your avatar picture</label>
+                <div class="form-group input-group">
+                    
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"> <i class="bi bi-image"></i> </span>
+                    </div>
+                    <input name="avatar" class="form-control" type="file" id="formFile" accept="image/*"></input>
+                </div>
 
-                    apiData.appendChild(playerDiv);
-                });
-            })
-            .catch(error => {
-                document.getElementById('api-data').textContent = `Error: ${error.message}`;
-            });
-    </script>
+                <!-- submit button -->
+                <div class="form-group">
+                    <button type="submit" class="btn btn-secondary btn-block" id="post-btn"> Create Account  </button>
+                </div> <!-- form-group// -->      
+                <p class="text-center">Have an account? <a href="">Log In</a> </p>                                                                 
+            </form>
+        </article>
+     </div> 
+
+
+
+
+
+    <main class="container-lg text-center" id="app" hidden></main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script type="module" src="/js/main.js"></script>
+   
 </body>
 </html>
