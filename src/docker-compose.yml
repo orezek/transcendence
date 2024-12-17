@@ -1,30 +1,31 @@
 services:
   ruby-service:
     build:
-      context: ./srcs/auth_service
+      context: ./auth_service
       dockerfile: Dockerfile
     container_name: auth_service
     volumes:
-      - ./srcs/auth_service:/usr/src/app
+      - ./auth_service:/usr/src/app
     networks:
       - transcendence
 
   proxy-service:
     build:
-      context: ./srcs/proxy_service
+      context: ./proxy_service
       dockerfile: Dockerfile
     container_name: proxy_service
     ports:
       - 80:80
       - 443:443
     volumes:
-      - ./srcs/proxy_service/static:/var/www/proxy_service/static
+      - ./proxy_service/static:/var/www/proxy_service/static
+      - ../frontend:/var/www/proxy_service/frontend
     networks:
       - transcendence
 
   db-service:
     build:
-      context: ./srcs/db_service
+      context: ./db_service
       dockerfile: Dockerfile
     container_name: db_service
     restart: always
@@ -33,7 +34,7 @@ services:
       POSTGRES_PASSWORD: securepassword
       POSTGRES_DB: auth_db
     volumes:
-      - ./srcs/db_service/init:/docker-entrypoint-initdb.d
+      - ./db_service/init:/docker-entrypoint-initdb.d
     networks:
       - transcendence
 
