@@ -10,4 +10,4 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 RUN apt-get update && apt-get install -y libpq-dev
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 # Set the default command to run the Ruby script
-CMD ["ruby", "./auth_service.rb", "-o", "0.0.0.0"]
+CMD ["ruby", "./app.rb", "-o", "0.0.0.0"]
