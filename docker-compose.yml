@@ -4,6 +4,7 @@ services:
       context: ./srcs/auth_service
       dockerfile: Dockerfile
     container_name: auth_service
+    restart: always
     volumes:
       - ./srcs/auth_service:/usr/src/app
     networks:
@@ -28,12 +29,16 @@ services:
       dockerfile: Dockerfile
     container_name: db_service
     restart: always
+    ports:
+      - 5432:5432
     environment:
       POSTGRES_USER: auth_user
       POSTGRES_PASSWORD: securepassword
       POSTGRES_DB: auth_db
+      PGDATA: /var/auth-db
     volumes:
       - ./srcs/db_service/init:/docker-entrypoint-initdb.d
+      - ./srcs/db_service/data:/var/auth-db
     networks:
       - transcendence
 
