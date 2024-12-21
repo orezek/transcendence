@@ -7,3 +7,6 @@ gem 'rackup'
 gem 'pg'
 gem 'sequel'
 gem 'bcrypt'
+# Debugging gems with specific versions
+gem 'ruby-debug-ide'
+gem 'debase'

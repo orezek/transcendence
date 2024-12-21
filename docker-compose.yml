@@ -4,7 +4,10 @@ services:
       context: ./srcs/auth_service
       dockerfile: Dockerfile
     container_name: auth_service
-    restart: always
+    environment:
+      - PROFILE=${PROFILES:-default}  # Default to 'default' profile if PROFILES is not set
+    ports:
+      - "1234:1234"
     volumes:
       - ./srcs/auth_service:/usr/src/app
     networks:
@@ -15,6 +18,7 @@ services:
       context: ./srcs/proxy_service
       dockerfile: Dockerfile
     container_name: proxy_service
+    restart: always
     ports:
       - 80:80
       - 443:443
