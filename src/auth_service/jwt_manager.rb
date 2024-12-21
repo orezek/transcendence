@@ -15,14 +15,15 @@ class JwtManager
   end
 
   def decode_jwt(token)
-  begin
-    return nil if token.nil? || token.empty?
-    payload = JWT.decode(token, JWT_SECRET, true, {algorithm: 'HS256'}).first
-    payload
-  rescue JWT::ExpiredSignature
-    raise ExpiredTokenError
-  rescue JWT::DecodeError
-    raise InvalidTokenError
+    begin
+      return nil if token.nil? || token.empty?
+      JWT.decode(token, JWT_SECRET, true, {algorithm: 'HS256'}).first
+    rescue JWT::ExpiredSignature
+      raise ExpiredTokenError
+    rescue JWT::DecodeError
+      raise InvalidTokenError
+    end
   end
 end
+
 
