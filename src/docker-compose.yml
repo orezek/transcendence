@@ -30,11 +30,14 @@ services:
     container_name: db_service
     restart: always
     environment:
+    # this changes the default postgres super user crendetials and creates a default db
+    # by default the super use does not have a password
+    # use these credentials for CRUD
       POSTGRES_USER: auth_user
       POSTGRES_PASSWORD: securepassword
       POSTGRES_DB: auth_db
-    volumes:
-      - ./db_service/init:/docker-entrypoint-initdb.d
+    # volumes:
+      # - ./db_service/init:/docker-entrypoint-initdb.d
     networks:
       - transcendence
 

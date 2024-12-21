@@ -5,3 +5,6 @@ gem "json"
 gem 'puma'
 gem 'rackup'
 gem 'pg'
+gem 'sequel'
+gem 'bcrypt'
+gem 'jwt'

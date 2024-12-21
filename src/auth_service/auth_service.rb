@@ -1,72 +1,175 @@
 require 'sinatra'
 require 'json'
-require 'pg' # PostgreSQL library
+require 'pg'
+require 'sequel'
+require 'bcrypt'
+require_relative 'jwt_manager'
 
-# Database connection helper
-def connect_to_db
-  PG.connect(
-    host: 'db-service',        # Service name in docker-compose.yml
-    user: 'auth_user',         # As defined in POSTGRES_USER
-    password: 'securepassword', # As defined in POSTGRES_PASSWORD
-    dbname: 'auth_db'          # As defined in POSTGRES_DB
-  )
-end
+class AuthService < Sinatra::Base
+  set :bind, '0.0.0.0'
+  set :port, 4567
+  def initialize
+    super
+    @jwt_manager = JwtManager.new
+  end
 
-get '/api/auth/player-info' do
-  begin
-    conn = connect_to_db
-    # Query all users from the database
-    result = conn.exec("SELECT id, username, email, avatar FROM users")
+  def authenticate_request!
+    auth_header = request.env['HTTP_AUTHORIZATION']
+    token = auth_header&.split(' ')&.last
+    if token.nil? || token.empty?
+      halt 401, { error: 'Missing token'}.to_json
+    end
+    begin
+      decoded_token = @jwt_manager.decode_jwt(token)
+    rescue InvalidTokenError => e
+      halt 401, { error: e.message }.to_json
+    rescue ExpiredTokenError => e
+      halt 401, { error: e.message }.to_json
+    end
+    @current_user = User.where(id: decoded_token['user_id']).first
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_user
+  end
 
-    # Convert query results to an array of hashes
-    players = result.map { |row| row }
 
-    content_type :json
+  db_connection = {
+    adapter: 'postgres',
+    host: 'db-service',
+    database: 'auth_db',
+    user: 'auth_user',
+    password: 'securepassword'
+  }
+  DB = Sequel.connect(db_connection)
+
+  # Create USERS table
+  DB.create_table? :users do
+    primary_key :id
+    String :username, null: false, unique: true
+    String :password_hash, null: false
+    String :email, null: false, unique: true
+    String :avatar
+    DateTime :created_at, default: Sequel::CURRENT_TIMESTAMP
+    DateTime :updated_at, default: Sequel::CURRENT_TIMESTAMP
+  end
+
+  # User model
+  class User < Sequel::Model
+    plugin :validation_helpers
+
+    def validate
+      super
+      validates_presence [:username, :password_hash, :email]
+      validates_unique :username, message: 'Username is already taken'
+      validates_unique :email, message: 'Email is already registered'
+      validates_format /\A[^@\s]+@[^@\s]+\z/, :email, message: 'Email is not valid'
+    end
+  end
+
+  # Middleware to parse JSON body
+  before do
+    if request.content_type == 'application/json'
+      begin
+        request.body.rewind
+        @request_payload = JSON.parse(request.body.read, symbolize_names: true)
+      rescue JSON::ParserError
+        halt 400, { error: 'Invalid JSON format' }.to_json
+      end
+    end
+  end
+
+  before do
+    puts "Received request: #{request.request_method} #{request.path}"
+  end
+  # Register API route
+  post '/api/register' do
+    puts "Received request: #{request.request_method} #{request.path}"
+    user_data = {
+      username: @request_payload[:username],
+      password_hash: BCrypt::Password.create(@request_payload[:password]),
+      email: @request_payload[:email],
+      avatar: @request_payload[:avatar] || '/images/default-avatar.png'
+    }
+    # Just testing incoming data
+    puts "Testing input"
+    if user_data[:username].to_s.empty?
+      puts 'empty username field'
+    end
+    puts user_data[:password_hash]
+    puts user_data[:email]
+    puts user_data[:avatar]
+    puts "End of testing input -----"
+    user = User.new(user_data)
+
+    begin
+      if user.valid?
+        user.save
+        status 201
+        { message: 'User registered successfully' }.to_json
+      else
+        status 400
+        { errors: user.errors.full_messages }.to_json
+      end
+    rescue Sequel::UniqueConstraintViolation => e
+      # Handle database-level uniqueness violations
+      status 409
+      error_field = e.message.include?('username') ? 'username' : 'email'
+      { error: "#{error_field.capitalize} is already taken" }.to_json
+    end
+  end
+
+
+  post '/api/login' do
+    begin
+      content_type :json
+      puts "Processing login request..."
+
+      username = @request_payload[:username]
+      password = @request_payload[:password]
+      puts "Received username: #{username}"
+      puts "Received password: #{password}"
+
+      # Halt if username or password is missing
+      halt 400, { error: 'Username and password are required' }.to_json unless username && password
+
+      # Fetch the user from the database
+      user = User.where(username: username).first
+      puts "Fetched user: #{user.inspect}"
+
+      # Validate the password
+      if user && BCrypt::Password.new(user.password_hash) == password
+        puts "Password validated successfully"
+        # Generate JWT token
+        #token = generate_jwt({ user_id: user.id, username: user.username })
+        token = @jwt_manager.generate_jwt(user_id: user.id, username: user.username)
+        status 200
+        { message: 'Login successful', token: token }.to_json
+      else
+        puts "Invalid username or password"
+        status 401
+        { error: 'Invalid username or password' }.to_json
+      end
+    rescue => e
+      puts "An error occurred: #{e.message}"
+      puts e.backtrace.join("\n")
+      status 500
+      { error: 'Internal Server Error' }.to_json
+    end
+  end
+
+  before '/api/user' do
+    authenticate_request!
+  end
+  get '/api/user' do
+    puts 'Testing user info'
+    puts @current_user[:username]
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_user
+    user = @current_user
     status 200
-    players.to_json
-  rescue PG::Error => e
-    halt 500, { error: e.message }.to_json
-  ensure
-    conn&.close
+    {
+      message: 'User Data',
+      user_id: user.id,
+      username: user.username,
+      avatar: user.avatar
+    }.to_json
   end
 end
-
-# Register a new user
-post '/api/auth/register' do
-  begin
-    data = JSON.parse(request.body.read)
-
-    # Extract data
-    username = data['username']
-    password = data['password']
-    email = data['email']
-    avatar = data['avatar']
-
-    # Validate input
-    errors = []
-    errors << "Username must be under 16 characters" if username.nil? || username.length > 16
-    errors << "Password must be under 32 characters" if password.nil? || password.length > 32
-    errors << "Invalid email address" if email.nil? || !(email.match(/\A[^@\s]+@[^@\s]+\z/))
-    errors << "Avatar must be provided" if avatar.nil?
-    halt 400, { errors: errors }.to_json unless errors.empty?
-
-    # Insert user into the database
-    conn = connect_to_db
-    result = conn.exec_params(
-      "INSERT INTO users (username, password, email, avatar) VALUES ($1, $2, $3, $4) RETURNING id",
-      [username, password, email, avatar]
-    )
-
-    user_id = result[0]['id'] # Get the generated ID
-
-    status 201
-    { message: "User registered successfully", user_id: user_id }.to_json
-
-  rescue PG::Error => e
-    halt 500, { error: e.message }.to_json
-  rescue JSON::ParserError
-    halt 400, { error: "Invalid JSON format" }.to_json
-  ensure
-    conn&.close
-  end
-end
+AuthService.run!
