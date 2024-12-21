@@ -4,7 +4,7 @@ require 'pg'
 require 'sequel'
 require 'bcrypt'
 require './jwt_manager'
-require './db_handler'
+require './config/db_setup'
 
 class AuthService < Sinatra::Base
   set :bind, '0.0.0.0'
@@ -13,6 +13,9 @@ class AuthService < Sinatra::Base
     super
     @jwt_manager = JwtManager.new
   end
+
+  db = DBSetup.new(ENV['RACK_ENV'] || 'development')
+  DB = db.db
 
   def authenticate_request!
     auth_header = request.env['HTTP_AUTHORIZATION']
@@ -30,18 +33,8 @@ class AuthService < Sinatra::Base
     @current_user = User.where(id: decoded_token['user_id']).first
     halt 401, { error: 'Unauthorized' }.to_json unless @current_user
   end
-  class User < Sequel::Model
-    plugin :validation_helpers
-    def validate
-      super
-      validates_presence [:username, :password_hash, :email]
-      validates_unique :username, message: 'Username is already taken'
-      validates_unique :email, message: 'Email is already registered'
-      validates_format /\A[^@\s]+@[^@\s]+\z/, :email, message: 'Email is not valid'
-    end
-  end
 
-  # Middleware to parse JSON body
+  # Middleware to parse JSON body = before any route processing do this below
   before do
     if request.content_type == 'application/json'
       begin
@@ -61,20 +54,11 @@ class AuthService < Sinatra::Base
       avatar: @request_payload[:avatar] || '/images/default-avatar.png'
     }
     user = User.new(user_data)
-
-    begin
-      if user.valid?
-        user.save
-        status 201
-        { message: 'User registered successfully' }.to_json
-      else
-        halt 400, { errors: user.errors.full_messages }.to_json
-      end
-    rescue Sequel::UniqueConstraintViolation => e
-      # Handle database-level uniqueness violations
-      status 409
-      error_field = e.message.include?('username') ? 'username' : 'email'
-      { error: "#{error_field.capitalize} is already taken" }.to_json
+    if user.valid?
+      user.save
+      halt 201, { message: 'User registered successfully' }.to_json
+    else
+      halt 400, { errors: user.errors.full_messages }.to_json
     end
   end
 

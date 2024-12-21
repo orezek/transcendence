@@ -28,9 +28,11 @@ services:
       context: ./db_service
       dockerfile: Dockerfile
     container_name: db_service
+    ports:
+      - 5432:5432
     restart: always
     environment:
-    # this changes the default postgres super user crendetials and creates a default db
+    # this changes the default postgres superuser credentials and creates a default db
     # by default the super use does not have a password
     # use these credentials for CRUD
       POSTGRES_USER: auth_user
