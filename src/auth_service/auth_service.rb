@@ -7,13 +7,14 @@ require './jwt_manager'
 require './config/db_setup'
 
 class AuthService < Sinatra::Base
+  ACCESS_TOKEN_VALIDITY = 60 # 1 minute
+  REFRESH_TOKEN_VALIDITY = 60 * 60 * 24 * 7 # 7 days
   set :bind, '0.0.0.0'
   set :port, 4567
   def initialize
     super
     @jwt_manager = JwtManager.new
   end
-
   db = DBSetup.new(ENV['RACK_ENV'] || 'development')
   DB = db.db
 
@@ -35,14 +36,11 @@ class AuthService < Sinatra::Base
   def authenticate_request!
     # Extract token from headers
     token = extract_token_from_headers
-    puts "[DEBUG] Token: #{token}"
     halt 401, { error: 'Missing or invalid token' }.to_json if token.nil? || token.empty?
 
     # Decode the token
     begin
       decoded_token = @jwt_manager.decode_jwt(token)
-      puts "[DEBUG] Token exp value: #{decoded_token['exp']}"
-      puts "[DEBUG] Current time: #{Time.now.to_i}"
     rescue InvalidTokenError => e
       halt 401, { error: e.message }.to_json
     rescue ExpiredTokenError => e
@@ -54,8 +52,8 @@ class AuthService < Sinatra::Base
     halt 401, { error: 'Unauthorized' }.to_json unless @current_user
 
     # Look up session
-    ip_address = request.ip
-    user_agent = request.user_agent
+    ip_address = request.ip || 'unknown ip address'
+    user_agent = request.user_agent || 'unknown user agent'
     @current_session = Session.where(
       user_id: @current_user.id,
       ip_address: ip_address,
@@ -97,9 +95,8 @@ class AuthService < Sinatra::Base
     # Extract and validate input from @request_payload
     username = @request_payload[:username]
     password = @request_payload[:password]
-    ip_address = @request_payload[:ip_address] || request.ip
-    user_agent = @request_payload[:user_agent] || request.user_agent
-
+    ip_address = request.ip || 'unknown ip address'
+    user_agent = request.user_agent || 'unknown user agent'
     halt 400, { error: 'Username and password are required' }.to_json unless username && password
 
     # Fetch the user from the database
@@ -110,7 +107,6 @@ class AuthService < Sinatra::Base
     unless BCrypt::Password.new(user.password_hash) == password
       halt 401, { error: 'Invalid username or password' }.to_json
     end
-
     # Check if a session already exists
     existing_session = Session.where(
       user_id: user.id,
@@ -118,46 +114,35 @@ class AuthService < Sinatra::Base
       user_agent: user_agent,
       revoked: false
     ).first
-
+    refresh_token = @jwt_manager.generate_jwt({
+                                                user_id: user.id,
+                                                username: user.username
+                                              },
+                                              REFRESH_TOKEN_VALIDITY)
     if existing_session
       # Renew the refresh token and update the session
-      refresh_token = @jwt_manager.generate_jwt(
-        user_id: user.id,
-        username: user.username,
-        exp_in_seconds: 7 * 24 * 60 * 60 # 7 days
-      )
-      existing_session.update(refresh_token: refresh_token, expires_at: Time.now + (7 * 24 * 60 * 60))
+      existing_session.update(refresh_token: refresh_token, expires_at: Time.now + REFRESH_TOKEN_VALIDITY)
     else
       # Generate a new session
-      refresh_token = @jwt_manager.generate_jwt(
-        user_id: user.id,
-        username: user.username,
-        exp_in_seconds: 7 * 24 * 60 * 60 # 7 days
-      )
+      puts ['DEBUG', 'Refresh token: ', refresh_token, '1']
       session = Session.new(
         user_id: user.id,
         refresh_token: refresh_token,
         ip_address: ip_address,
         user_agent: user_agent,
-        expires_at: Time.now + (7 * 24 * 60 * 60)
+        expires_at: Time.now + REFRESH_TOKEN_VALIDITY
       )
-
       halt 500, { error: 'Failed to create session' }.to_json unless session.save
     end
 
     # Generate short-lived access token
-    token = @jwt_manager.generate_jwt(
-      user_id: user.id,
-      username: user.username,
-      exp_in_seconds: 60 * 1 * 1
-    )
-
+    token = @jwt_manager.generate_jwt({
+                                        user_id: user.id,
+                                        username: user.username
+                                      },
+                                      ACCESS_TOKEN_VALIDITY)
     # Respond with success
-    halt 200, {
-      message: 'Login successful',
-      token: token,
-      refresh_token: refresh_token
-    }.to_json
+    halt 200, { message: 'Login successful', token: token }.to_json
   rescue Sequel::DatabaseError
     halt 500, { error: 'Database error occurred' }.to_json
   rescue StandardError => e
@@ -171,35 +156,18 @@ class AuthService < Sinatra::Base
   post '/api/logout' do
     # Ensure the user is authenticated
     halt 401, { error: 'Unauthorized' }.to_json unless @current_user
-
-    # Extract IP address and user agent from request payload
-    ip_address = @request_payload[:ip_address] || request.ip
-    user_agent = @request_payload[:user_agent] || request.user_agent
-
-    # Find the current session
-    current_session = Session.where(
-      user_id: @current_user.id,
-      ip_address: ip_address,
-      user_agent: user_agent,
-      revoked: false
-    ).first
-
-    # Handle missing session
-    halt 404, { error: 'Session not found' }.to_json unless current_session
-
-    # Revoke the session
-    current_session.update(revoked: true)
-
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_session
+    @current_session.update(revoked: true)
     # Respond with success
     halt 200, { message: 'Logout successful' }.to_json
   end
 
   before '/api/user' do
     authenticate_request!
-    puts "[DEBUG] Current server time: #{Time.now.utc}"
   end
   get '/api/user' do
     halt 401, { error: 'Unauthorized' }.to_json unless @current_user
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_session
     user = @current_user
     status 200
     {
@@ -208,6 +176,21 @@ class AuthService < Sinatra::Base
       username: user.username,
       avatar: user.avatar
     }.to_json
+  end
+
+  before '/api/refresh' do
+    authenticate_request!
+  end
+  post '/api/refresh' do
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_user
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_session
+    # Renew the access token and return new token to user
+    token = @jwt_manager.generate_jwt({
+                                        user_id: @current_user.id,
+                                        username: @current_user.username
+                                      },
+                                      ACCESS_TOKEN_VALIDITY)
+    halt 200, { message: 'Refresh successful', token: token }.to_json
   end
 end
 AuthService.run!
