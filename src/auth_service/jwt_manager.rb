@@ -5,12 +5,10 @@ class ExpiredTokenError < StandardError; end
 
 class JwtManager
   JWT_SECRET = ENV.fetch('JWT_SECRET', 'sljf23iousaljdasklfjsa2349asfdas')
-  DEFAULT_EXPIRATION = 24 * 60 * 60
   def initialize; end
 
-  def generate_jwt(payload)
-    exp = 24 * 60 * 60
-    payload[:exp] = Time.now.to_i + DEFAULT_EXPIRATION
+  def generate_jwt(payload, exp_in_seconds)
+    payload[:exp] = Time.now.to_i + exp_in_seconds
     JWT.encode(payload, JWT_SECRET, 'HS256')
   end
 
