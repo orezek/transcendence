@@ -20,6 +20,7 @@ class DBSetup
     initializer = DbTableInitializer.new(@db)
     initializer.setup_tables
   end
+  # dynamic import - funny and + it becomes globally accessible
   def load_models
     Dir[File.join(__dir__, '../models/*rb')].each { |file| require file }
   end
