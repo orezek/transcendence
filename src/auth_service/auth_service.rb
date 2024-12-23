@@ -48,8 +48,7 @@ class AuthService < Sinatra::Base
     end
 
     # Look up user
-    @current_user = User.where(id: decoded_token['user_id']).first
-    puts "Authenticate User: #{@current_user.id}"
+    @current_user = User.where(id: decoded_token['user_id']).where(active: true).first
     halt 401, { error: 'Unauthorized' }.to_json unless @current_user
 
     # Look up session
@@ -101,7 +100,7 @@ class AuthService < Sinatra::Base
     halt 400, { error: 'Username and password are required' }.to_json unless username && password
 
     # Fetch the user from the database
-    user = User.where(username: username).first
+    user = User.where(username: username).where(active: true).first
     halt 401, { error: 'Invalid username or password' }.to_json unless user
 
     # Validate password
@@ -197,8 +196,8 @@ class AuthService < Sinatra::Base
     authenticate_request!
   end
   post '/api/logout/all' do
-    halt 401, { error: 'Unauthorized User' }.to_json unless @current_user
-    halt 401, { error: 'Unauthorized Session' }.to_json unless @current_session
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_user
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_session
     # invalidate all user sessions
     Session.where(user_id: @current_user.id).update(revoked: true)
     halt 200, { message: 'All sessions invalidated' }.to_json
@@ -208,12 +207,24 @@ class AuthService < Sinatra::Base
     authenticate_request!
   end
   get '/api/sessions' do
-    halt 401, { error: 'Unauthorized User' }.to_json unless @current_user
-    halt 401, { error: 'Unauthorized Session' }.to_json unless @current_session
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_user
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_session
     # retrieve all user sessions
     user_sessions = Session.where(user_id: @current_user.id).where(revoked: false).all
     session_data = user_sessions.map(&:values)
     halt 200, { message: session_data }.to_json
+  end
+
+  before '/api/user/delete' do
+    authenticate_request!
+  end
+  post '/api/user/delete' do
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_user
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_session
+    # invalidate user and sessions related to the user
+    @current_user.update(active: false)
+    Session.where(user_id: @current_user.id).update(revoked: true)
+    halt 200, { message: 'User deleted' }.to_json
   end
 end
 AuthService.run!

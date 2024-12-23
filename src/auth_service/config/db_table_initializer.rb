@@ -21,9 +21,9 @@ class DbTableInitializer
   def create_users_table
     @db.create_table? :users do
       primary_key :id
-      String :username, null: false, unique: true
+      String :username, null: false, unique: false
       String :password_hash, null: false
-      String :email, null: false, unique: true
+      String :email, null: false, unique: false
       String :avatar
       DateTime :created_at, default: Sequel::CURRENT_TIMESTAMP
       DateTime :updated_at, default: Sequel::CURRENT_TIMESTAMP
