@@ -226,5 +226,36 @@ class AuthService < Sinatra::Base
     Session.where(user_id: @current_user.id).update(revoked: true)
     halt 200, { message: 'User deleted' }.to_json
   end
+
+  before '/api/user/update' do
+    authenticate_request!
+  end
+  post '/api/user/update' do
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_user
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_session
+
+    # Fetch the current user
+    user = @current_user
+
+    # Update user information
+    user_data = {
+      username: @request_payload[:username],
+      password_hash: BCrypt::Password.create(@request_payload[:password]),
+      email: @request_payload[:email],
+      avatar: @request_payload[:avatar] || '/images/default-avatar.png'
+    }
+
+    # Assign new values
+    user.set(user_data)
+
+    # Validate and save the record
+    if user.valid?
+      user.save
+      halt 200, { message: 'User updated successfully' }.to_json
+    else
+      halt 400, { errors: user.errors.full_messages }.to_json
+    end
+  end
+
 end
 AuthService.run!
