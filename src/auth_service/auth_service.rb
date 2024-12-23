@@ -49,6 +49,7 @@ class AuthService < Sinatra::Base
 
     # Look up user
     @current_user = User.where(id: decoded_token['user_id']).first
+    puts "Authenticate User: #{@current_user.id}"
     halt 401, { error: 'Unauthorized' }.to_json unless @current_user
 
     # Look up session
@@ -124,7 +125,6 @@ class AuthService < Sinatra::Base
       existing_session.update(refresh_token: refresh_token, expires_at: Time.now + REFRESH_TOKEN_VALIDITY)
     else
       # Generate a new session
-      puts ['DEBUG', 'Refresh token: ', refresh_token, '1']
       session = Session.new(
         user_id: user.id,
         refresh_token: refresh_token,
@@ -191,6 +191,29 @@ class AuthService < Sinatra::Base
                                       },
                                       ACCESS_TOKEN_VALIDITY)
     halt 200, { message: 'Refresh successful', token: token }.to_json
+  end
+
+  before '/api/logout/all' do
+    authenticate_request!
+  end
+  post '/api/logout/all' do
+    halt 401, { error: 'Unauthorized User' }.to_json unless @current_user
+    halt 401, { error: 'Unauthorized Session' }.to_json unless @current_session
+    # invalidate all user sessions
+    Session.where(user_id: @current_user.id).update(revoked: true)
+    halt 200, { message: 'All sessions invalidated' }.to_json
+  end
+
+  before '/api/sessions' do
+    authenticate_request!
+  end
+  get '/api/sessions' do
+    halt 401, { error: 'Unauthorized User' }.to_json unless @current_user
+    halt 401, { error: 'Unauthorized Session' }.to_json unless @current_session
+    # retrieve all user sessions
+    user_sessions = Session.where(user_id: @current_user.id).where(revoked: false).all
+    session_data = user_sessions.map(&:values)
+    halt 200, { message: session_data }.to_json
   end
 end
 AuthService.run!
