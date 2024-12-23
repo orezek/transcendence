@@ -3,8 +3,8 @@ require 'json'
 require 'pg'
 require 'sequel'
 require 'bcrypt'
-require './jwt_manager'
-require './config/db_setup'
+require './utils/jwt_manager'
+require './db_config/db_setup'
 
 class AuthService < Sinatra::Base
   ACCESS_TOKEN_VALIDITY = 60 # 1 minute
@@ -75,7 +75,7 @@ class AuthService < Sinatra::Base
 
 
   # Register API route
-  post '/api/register' do
+  post '/api/user/register' do
     user_data = {
       username: @request_payload[:username],
       password_hash: BCrypt::Password.create(@request_payload[:password]),
@@ -91,10 +91,12 @@ class AuthService < Sinatra::Base
     end
   end
 
-  post '/api/login' do
+  post '/api/user/login' do
     # Extract and validate input from @request_payload
     username = @request_payload[:username]
     password = @request_payload[:password]
+    puts username
+    puts password
     ip_address = request.ip || 'unknown ip address'
     user_agent = request.user_agent || 'unknown user agent'
     halt 400, { error: 'Username and password are required' }.to_json unless username && password
@@ -149,10 +151,10 @@ class AuthService < Sinatra::Base
   end
 
 
-  before '/api/logout' do
+  before '/api/user/logout' do
     authenticate_request!
   end
-  post '/api/logout' do
+  post '/api/user/logout' do
     # Ensure the user is authenticated
     halt 401, { error: 'Unauthorized' }.to_json unless @current_user
     halt 401, { error: 'Unauthorized' }.to_json unless @current_session
@@ -161,10 +163,10 @@ class AuthService < Sinatra::Base
     halt 200, { message: 'Logout successful' }.to_json
   end
 
-  before '/api/user' do
+  before '/api/user/info' do
     authenticate_request!
   end
-  get '/api/user' do
+  get '/api/user/info' do
     halt 401, { error: 'Unauthorized' }.to_json unless @current_user
     halt 401, { error: 'Unauthorized' }.to_json unless @current_session
     user = @current_user
@@ -177,10 +179,10 @@ class AuthService < Sinatra::Base
     }.to_json
   end
 
-  before '/api/refresh' do
+  before '/api/token/refresh' do
     authenticate_request!
   end
-  post '/api/refresh' do
+  post '/api/token/refresh' do
     halt 401, { error: 'Unauthorized' }.to_json unless @current_user
     halt 401, { error: 'Unauthorized' }.to_json unless @current_session
     # Renew the access token and return new token to user
@@ -192,10 +194,10 @@ class AuthService < Sinatra::Base
     halt 200, { message: 'Refresh successful', token: token }.to_json
   end
 
-  before '/api/logout/all' do
+  before '/api/user/logout/all' do
     authenticate_request!
   end
-  post '/api/logout/all' do
+  post '/api/user/logout/all' do
     halt 401, { error: 'Unauthorized' }.to_json unless @current_user
     halt 401, { error: 'Unauthorized' }.to_json unless @current_session
     # invalidate all user sessions
@@ -203,10 +205,10 @@ class AuthService < Sinatra::Base
     halt 200, { message: 'All sessions invalidated' }.to_json
   end
 
-  before '/api/sessions' do
+  before '/api/user/sessions' do
     authenticate_request!
   end
-  get '/api/sessions' do
+  get '/api/user/sessions' do
     halt 401, { error: 'Unauthorized' }.to_json unless @current_user
     halt 401, { error: 'Unauthorized' }.to_json unless @current_session
     # retrieve all user sessions
@@ -230,7 +232,7 @@ class AuthService < Sinatra::Base
   before '/api/user/update' do
     authenticate_request!
   end
-  post '/api/user/update' do
+  put '/api/user/update' do
     halt 401, { error: 'Unauthorized' }.to_json unless @current_user
     halt 401, { error: 'Unauthorized' }.to_json unless @current_session
 
