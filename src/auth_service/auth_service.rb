@@ -1,72 +1,261 @@
 require 'sinatra'
 require 'json'
-require 'pg' # PostgreSQL library
+require 'pg'
+require 'sequel'
+require 'bcrypt'
+require './jwt_manager'
+require './config/db_setup'
 
-# Database connection helper
-def connect_to_db
-  PG.connect(
-    host: 'db-service',        # Service name in docker-compose.yml
-    user: 'auth_user',         # As defined in POSTGRES_USER
-    password: 'securepassword', # As defined in POSTGRES_PASSWORD
-    dbname: 'auth_db'          # As defined in POSTGRES_DB
-  )
-end
+class AuthService < Sinatra::Base
+  ACCESS_TOKEN_VALIDITY = 60 # 1 minute
+  REFRESH_TOKEN_VALIDITY = 60 * 60 * 24 * 7 # 7 days
+  set :bind, '0.0.0.0'
+  set :port, 4567
+  def initialize
+    super
+    @jwt_manager = JwtManager.new
+  end
+  db = DBSetup.new(ENV['RACK_ENV'] || 'development')
+  DB = db.db
 
-get '/api/auth/player-info' do
-  begin
-    conn = connect_to_db
-    # Query all users from the database
-    result = conn.exec("SELECT id, username, email, avatar FROM users")
+  # Middleware to parse JSON body = before any route processing do this below
+  before do
+    if request.content_type&.include?('application/json')
+      begin
+        request.body.rewind
+        body_content = request.body.read.strip
+        halt 400, { error: 'Empty request body' }.to_json if body_content.empty?
 
-    # Convert query results to an array of hashes
-    players = result.map { |row| row }
+        @request_payload = JSON.parse(body_content, symbolize_names: true)
+      rescue JSON::ParserError
+        halt 400, { error: 'Invalid JSON format' }.to_json
+      end
+    end
+  end
 
-    content_type :json
+  def authenticate_request!
+    # Extract token from headers
+    token = extract_token_from_headers
+    halt 401, { error: 'Missing or invalid token' }.to_json if token.nil? || token.empty?
+
+    # Decode the token
+    begin
+      decoded_token = @jwt_manager.decode_jwt(token)
+    rescue InvalidTokenError => e
+      halt 401, { error: e.message }.to_json
+    rescue ExpiredTokenError => e
+      halt 401, { error: e.message }.to_json
+    end
+
+    # Look up user
+    @current_user = User.where(id: decoded_token['user_id']).where(active: true).first
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_user
+
+    # Look up session
+    ip_address = request.ip || 'unknown ip address'
+    user_agent = request.user_agent || 'unknown user agent'
+    @current_session = Session.where(
+      user_id: @current_user.id,
+      ip_address: ip_address,
+      user_agent: user_agent,
+      revoked: false
+    ).first
+
+    # Check session exists
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_session
+  end
+
+
+  private
+
+  def extract_token_from_headers
+    auth_header = request.env['HTTP_AUTHORIZATION']
+    auth_header&.split(' ')&.last
+  end
+
+
+  # Register API route
+  post '/api/register' do
+    user_data = {
+      username: @request_payload[:username],
+      password_hash: BCrypt::Password.create(@request_payload[:password]),
+      email: @request_payload[:email],
+      avatar: @request_payload[:avatar] || '/images/default-avatar.png'
+    }
+    user = User.new(user_data)
+    if user.valid?
+      user.save
+      halt 201, { message: 'User registered successfully' }.to_json
+    else
+      halt 400, { errors: user.errors.full_messages }.to_json
+    end
+  end
+
+  post '/api/login' do
+    # Extract and validate input from @request_payload
+    username = @request_payload[:username]
+    password = @request_payload[:password]
+    ip_address = request.ip || 'unknown ip address'
+    user_agent = request.user_agent || 'unknown user agent'
+    halt 400, { error: 'Username and password are required' }.to_json unless username && password
+
+    # Fetch the user from the database
+    user = User.where(username: username).where(active: true).first
+    halt 401, { error: 'Invalid username or password' }.to_json unless user
+
+    # Validate password
+    unless BCrypt::Password.new(user.password_hash) == password
+      halt 401, { error: 'Invalid username or password' }.to_json
+    end
+    # Check if a session already exists
+    existing_session = Session.where(
+      user_id: user.id,
+      ip_address: ip_address,
+      user_agent: user_agent,
+      revoked: false
+    ).first
+    refresh_token = @jwt_manager.generate_jwt({
+                                                user_id: user.id,
+                                                username: user.username
+                                              },
+                                              REFRESH_TOKEN_VALIDITY)
+    if existing_session
+      # Renew the refresh token and update the session
+      existing_session.update(refresh_token: refresh_token, expires_at: Time.now + REFRESH_TOKEN_VALIDITY)
+    else
+      # Generate a new session
+      session = Session.new(
+        user_id: user.id,
+        refresh_token: refresh_token,
+        ip_address: ip_address,
+        user_agent: user_agent,
+        expires_at: Time.now + REFRESH_TOKEN_VALIDITY
+      )
+      halt 500, { error: 'Failed to create session' }.to_json unless session.save
+    end
+
+    # Generate short-lived access token
+    token = @jwt_manager.generate_jwt({
+                                        user_id: user.id,
+                                        username: user.username
+                                      },
+                                      ACCESS_TOKEN_VALIDITY)
+    # Respond with success
+    halt 200, { message: 'Login successful', token: token }.to_json
+  rescue Sequel::DatabaseError
+    halt 500, { error: 'Database error occurred' }.to_json
+  rescue StandardError => e
+    halt 500, { error: 'An unexpected error occurred', details: e.message }.to_json
+  end
+
+
+  before '/api/logout' do
+    authenticate_request!
+  end
+  post '/api/logout' do
+    # Ensure the user is authenticated
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_user
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_session
+    @current_session.update(revoked: true)
+    # Respond with success
+    halt 200, { message: 'Logout successful' }.to_json
+  end
+
+  before '/api/user' do
+    authenticate_request!
+  end
+  get '/api/user' do
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_user
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_session
+    user = @current_user
     status 200
-    players.to_json
-  rescue PG::Error => e
-    halt 500, { error: e.message }.to_json
-  ensure
-    conn&.close
+    {
+      message: 'User Data',
+      user_id: user.id,
+      username: user.username,
+      avatar: user.avatar
+    }.to_json
   end
-end
 
-# Register a new user
-post '/api/auth/register' do
-  begin
-    data = JSON.parse(request.body.read)
-
-    # Extract data
-    username = data['username']
-    password = data['password']
-    email = data['email']
-    avatar = data['avatar']
-
-    # Validate input
-    errors = []
-    errors << "Username must be under 16 characters" if username.nil? || username.length > 16
-    errors << "Password must be under 32 characters" if password.nil? || password.length > 32
-    errors << "Invalid email address" if email.nil? || !(email.match(/\A[^@\s]+@[^@\s]+\z/))
-    errors << "Avatar must be provided" if avatar.nil?
-    halt 400, { errors: errors }.to_json unless errors.empty?
-
-    # Insert user into the database
-    conn = connect_to_db
-    result = conn.exec_params(
-      "INSERT INTO users (username, password, email, avatar) VALUES ($1, $2, $3, $4) RETURNING id",
-      [username, password, email, avatar]
-    )
-
-    user_id = result[0]['id'] # Get the generated ID
-
-    status 201
-    { message: "User registered successfully", user_id: user_id }.to_json
-
-  rescue PG::Error => e
-    halt 500, { error: e.message }.to_json
-  rescue JSON::ParserError
-    halt 400, { error: "Invalid JSON format" }.to_json
-  ensure
-    conn&.close
+  before '/api/refresh' do
+    authenticate_request!
   end
+  post '/api/refresh' do
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_user
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_session
+    # Renew the access token and return new token to user
+    token = @jwt_manager.generate_jwt({
+                                        user_id: @current_user.id,
+                                        username: @current_user.username
+                                      },
+                                      ACCESS_TOKEN_VALIDITY)
+    halt 200, { message: 'Refresh successful', token: token }.to_json
+  end
+
+  before '/api/logout/all' do
+    authenticate_request!
+  end
+  post '/api/logout/all' do
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_user
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_session
+    # invalidate all user sessions
+    Session.where(user_id: @current_user.id).update(revoked: true)
+    halt 200, { message: 'All sessions invalidated' }.to_json
+  end
+
+  before '/api/sessions' do
+    authenticate_request!
+  end
+  get '/api/sessions' do
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_user
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_session
+    # retrieve all user sessions
+    user_sessions = Session.where(user_id: @current_user.id).where(revoked: false).all
+    session_data = user_sessions.map(&:values)
+    halt 200, { message: session_data }.to_json
+  end
+
+  before '/api/user/delete' do
+    authenticate_request!
+  end
+  post '/api/user/delete' do
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_user
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_session
+    # invalidate user and sessions related to the user
+    @current_user.update(active: false)
+    Session.where(user_id: @current_user.id).update(revoked: true)
+    halt 200, { message: 'User deleted' }.to_json
+  end
+
+  before '/api/user/update' do
+    authenticate_request!
+  end
+  post '/api/user/update' do
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_user
+    halt 401, { error: 'Unauthorized' }.to_json unless @current_session
+
+    # Fetch the current user
+    user = @current_user
+
+    # Update user information
+    user_data = {
+      username: @request_payload[:username],
+      password_hash: BCrypt::Password.create(@request_payload[:password]),
+      email: @request_payload[:email],
+      avatar: @request_payload[:avatar] || '/images/default-avatar.png'
+    }
+
+    # Assign new values
+    user.set(user_data)
+
+    # Validate and save the record
+    if user.valid?
+      user.save
+      halt 200, { message: 'User updated successfully' }.to_json
+    else
+      halt 400, { errors: user.errors.full_messages }.to_json
+    end
+  end
+
 end
+AuthService.run!

@@ -1,0 +1,23 @@
+development:
+  adapter: postgres
+  host: db-service
+  database: auth_db
+  user: auth_user
+  password: securepassword
+  port: 5432
+
+test:
+  adapter: postgres
+  host: localhost
+  database: auth_db
+  user: auth_user
+  password: securepassword
+  port: 5432
+
+production:
+  adapter: postgres
+  host: db-service
+  database: auth_db
+  user: auth_user
+  password: securepassword
+  port: 5432
