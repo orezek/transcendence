@@ -75,7 +75,7 @@ class AuthService < Sinatra::Base
 
 
   # Register API route
-  post '/api/user/register' do
+  post '/api/user' do
     user_data = {
       username: @request_payload[:username],
       password_hash: BCrypt::Password.create(@request_payload[:password]),
@@ -91,12 +91,10 @@ class AuthService < Sinatra::Base
     end
   end
 
-  post '/api/user/login' do
+  post '/api/login' do
     # Extract and validate input from @request_payload
     username = @request_payload[:username]
     password = @request_payload[:password]
-    puts username
-    puts password
     ip_address = request.ip || 'unknown ip address'
     user_agent = request.user_agent || 'unknown user agent'
     halt 400, { error: 'Username and password are required' }.to_json unless username && password
@@ -194,10 +192,10 @@ class AuthService < Sinatra::Base
     halt 200, { message: 'Refresh successful', token: token }.to_json
   end
 
-  before '/api/user/logout/all' do
+  before '/api/sessions/logout/all' do
     authenticate_request!
   end
-  post '/api/user/logout/all' do
+  delete '/api/sessions/logout/all' do
     halt 401, { error: 'Unauthorized' }.to_json unless @current_user
     halt 401, { error: 'Unauthorized' }.to_json unless @current_session
     # invalidate all user sessions
@@ -205,10 +203,10 @@ class AuthService < Sinatra::Base
     halt 200, { message: 'All sessions invalidated' }.to_json
   end
 
-  before '/api/user/sessions' do
+  before '/api/sessions' do
     authenticate_request!
   end
-  get '/api/user/sessions' do
+  get '/api/sessions' do
     halt 401, { error: 'Unauthorized' }.to_json unless @current_user
     halt 401, { error: 'Unauthorized' }.to_json unless @current_session
     # retrieve all user sessions
@@ -217,10 +215,10 @@ class AuthService < Sinatra::Base
     halt 200, { message: session_data }.to_json
   end
 
-  before '/api/user/delete' do
-    authenticate_request!
+  before '/api/user' do
+    authenticate_request! if request.request_method == 'DELETE'
   end
-  post '/api/user/delete' do
+  delete '/api/user' do
     halt 401, { error: 'Unauthorized' }.to_json unless @current_user
     halt 401, { error: 'Unauthorized' }.to_json unless @current_session
     # invalidate user and sessions related to the user
@@ -229,10 +227,10 @@ class AuthService < Sinatra::Base
     halt 200, { message: 'User deleted' }.to_json
   end
 
-  before '/api/user/update' do
-    authenticate_request!
+  before '/api/user' do
+    authenticate_request! if request.request_method == 'PATCH'
   end
-  put '/api/user/update' do
+  patch '/api/user' do
     halt 401, { error: 'Unauthorized' }.to_json unless @current_user
     halt 401, { error: 'Unauthorized' }.to_json unless @current_session
 
@@ -261,3 +259,7 @@ class AuthService < Sinatra::Base
 
 end
 AuthService.run!
+
+# TODO
+# handle properly file download = save path to db and save the binary to a location
+# where nginx can reach
