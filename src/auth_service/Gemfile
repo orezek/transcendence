@@ -11,3 +11,7 @@ gem 'rackup'
 gem 'rubocop', group: 'development', require: false
 gem 'sequel'
 gem 'sinatra'
+
+# Debugging gems
+gem 'ruby-debug-ide'
+gem 'debase'
