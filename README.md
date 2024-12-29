@@ -25,6 +25,12 @@ Other from Sinatra - auth_service
 - Web Client:
 - Receives the HTTP response.
 
+# API doc visualisation with Swagger UI
+- openApi documentation visualisation with Swagger UI can be found at:
+```
+localhost/api-docs/
+```
+
 # Debugger
 ## Configuration
 - 2 things need to be set up - external debbuger and Remote interpreter
