@@ -4,6 +4,10 @@ services:
       context: ./auth_service
       dockerfile: Dockerfile
     container_name: auth_service
+    environment:
+      - PROFILE=${PROFILE:-default}  # Default to 'default' profile if PROFILES is not set
+    ports:
+      - "1234:1234"
     volumes:
       - ./auth_service:/usr/src/app
     networks:
@@ -15,8 +19,8 @@ services:
       dockerfile: Dockerfile
     container_name: proxy_service
     ports:
-      - 80:80
-      - 443:443
+      - "80:80"
+      - "443:443"
     volumes:
       - ./proxy_service/static:/var/www/proxy_service/static
       - ../frontend:/var/www/proxy_service/frontend
@@ -30,7 +34,7 @@ services:
       dockerfile: Dockerfile
     container_name: db_service
     ports:
-      - 5432:5432
+      - "5432:5432"
     restart: always
     environment:
     # this changes the default postgres superuser credentials and creates a default db
