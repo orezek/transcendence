@@ -263,3 +263,12 @@ AuthService.run!
 # TODO
 # handle properly file download = save path to db and save the binary to a location
 # where nginx can reach
+
+# TODO
+# learn, map and implement how to share DB and files on docker, db should have persistent state as well
+# as file with user avatars
+# what options there are what suits us most?
+
+# TODO
+# change the JWT token return from body to Set-Cookie (HttpOnly cookies storage) header in order to
+# provide security and comply with best practices
