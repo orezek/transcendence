@@ -1,106 +1,266 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- [Previous head and style sections remain exactly the same] -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ft_transcendence - Surprise</title>
+    <title>PONG - Classic Arcade Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* [Previous styles remain exactly the same] */
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
-        }
-        header {
-            background-color: #4caf50;
+            background-color: black;
             color: white;
-            padding: 1em 0;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+        .navbar {
+            background-color: rgba(0, 0, 0, 0.9) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 0;
+        }
+        .title-section {
+            position: absolute;
+            top: 100px;
+            left: 0;
+            right: 0;
             text-align: center;
+            z-index: 10;
         }
-        section {
-            padding: 2em;
-            max-width: 800px;
-            margin: auto;
+        .main-title {
+            font-family: 'Courier New', monospace;
+            font-size: 6rem;
+            letter-spacing: 1rem;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            margin-bottom: 1rem;
         }
-        .image-section {
-            margin-top: 2em;
-            text-align: center;
+        .cta-section {
+            position: fixed;
+            bottom: 50px;
+            left: 0;
+            right: 0;
+            z-index: 10;
         }
-        .image-section img {
-            max-width: 100%;
-            height: auto;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        .btn-custom {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: bold;
+            padding: 12px 0;
+            height: 48px;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            border-radius: 25px;
+            width: 90vw;
+            max-width: 200px;
+            line-height: 1;
         }
-        .api-section {
-            margin-top: 2em;
-            padding: 1em;
-            background-color: #e3f2fd;
-            border: 1px solid #90caf9;
-            border-radius: 8px;
+
+        /* Responsive adjustments */
+        @media (max-width: 576px) {
+            .btn-custom {
+                width: 80vw;
+                max-width: none;
+                margin: 5px;
+                padding: 12px 30px;
+            }
+        }
+
+        @media (max-width: 320px) {
+            .btn-custom {
+                width: 90vw;
+                font-size: 0.9rem;
+                padding: 10px 20px;
+            }
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+        }
+        .btn-play {
+            background: linear-gradient(45deg, #00ff87, #60efff);
+            color: black;
+            font-size: 1.2rem;
+        }
+        .btn-login {
+            background: linear-gradient(45deg, #0061ff, #60efff);
+        }
+        .btn-register {
+            background: linear-gradient(45deg, #ff00a8, #ff446c);
+        }
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Welcome to ft_transcendence</h1>
-    </header>
-
-    <section>
-        <h2>Surprise!</h2>
-        <p>This project is about doing something you’ve never done before. Remind yourself of the beginning of your journey in computer science. Look at you now. Time to shine!</p>
-        <p><strong>Version:</strong> 15</p>
-
-        <!-- Image Section -->
-        <div class="image-section">
-            <h3>Project Highlight</h3>
-            <img src="./assets/images/transcendence.jpg" alt="Transcendence" />
+<!-- [Previous HTML body content remains exactly the same] -->
+<!-- Bootstrap Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <div class="container">
+        <a class="navbar-brand fs-4" href="#">
+            <i class="fas fa-table-tennis-paddle-ball"></i>PONG
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Leaderboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Support</a>
+                </li>
+            </ul>
         </div>
+    </div>
+</nav>
 
-        <!-- API Section -->
-        <div class="api-section">
-            <h3>API Response</h3>
-            <div id="api-data">Loading player information...</div>
-        </div>
-    </section>
+<!-- Background Canvas -->
+<canvas id="bg-canvas"></canvas>
 
-    <script>
-        // Fetch data from the API
-        fetch('/api/auth/player-info')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                const apiData = document.getElementById('api-data');
-                apiData.innerHTML = ''; // Clear previous content
+<!-- Main Title -->
+<div class="title-section">
+    <h1 class="main-title">PONG</h1>
+    <p class="lead text-light opacity-75">The Classic Arcade Game in 42 style</p>
+</div>
 
-                // Iterate through the users and create rectangles
-                data.forEach(player => {
-                    const playerDiv = document.createElement('div');
-                    playerDiv.style.border = '1px solid #ccc';
-                    playerDiv.style.margin = '10px 0';
-                    playerDiv.style.padding = '10px';
-                    playerDiv.style.borderRadius = '8px';
-                    playerDiv.style.backgroundColor = '#f9f9f9';
+<!-- Call to Action Section -->
+<div class="cta-section text-center">
+    <div class="mt-3 d-flex justify-content-center align-items-center gap-3">
+        <button class="btn btn-custom btn-login d-flex align-items-center justify-content-center">
+            <i class="fas fa-sign-in-alt me-2"></i>
+            <span>Login</span>
+        </button>
+        <button class="btn btn-custom btn-register d-flex align-items-center justify-content-center">
+            <i class="fas fa-user-plus me-2"></i>
+            <span>Register</span>
+        </button>
+    </div>
+</div>
 
-                    playerDiv.innerHTML = `
-                        <strong>Player Information:</strong><br>
-                        ID: ${player.id}<br>
-                        Name: ${player.username}<br>
-                        Email: ${player.email}<br>
-                        <img src="${player.avatar}" alt="${player.username}'s avatar" width="100" />
-                    `;
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Three.js setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({
+        canvas: document.querySelector('#bg-canvas'),
+        antialias: true
+    });
 
-                    apiData.appendChild(playerDiv);
-                });
-            })
-            .catch(error => {
-                document.getElementById('api-data').textContent = `Error: ${error.message}`;
-            });
-    </script>
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    // Create paddles and ball
+    const paddleGeometry = new THREE.BoxGeometry(0.2, 5, 0.2);
+    const ballGeometry = new THREE.SphereGeometry(0.2, 32, 32);
+    const material = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.8
+    });
+
+    const leftPaddle = new THREE.Mesh(paddleGeometry, material);
+    const rightPaddle = new THREE.Mesh(paddleGeometry, material);
+    const ball = new THREE.Mesh(ballGeometry, material);
+
+    // Position elements
+    leftPaddle.position.x = -8;
+    rightPaddle.position.x = 8;
+    camera.position.z = 15;
+
+    scene.add(leftPaddle);
+    scene.add(rightPaddle);
+    scene.add(ball);
+
+    // Animation variables
+    let ballSpeedX = 0.15;
+    let ballSpeedY = 0.1;
+    let paddleSpeed = 0.05;
+    let paddleDirection = 1;
+    const initialBallSpeed = 0.15;
+
+    // Function to reset ball position
+    function resetBall() {
+        ball.position.set(0, 0, 0);
+        // Randomize initial direction
+        ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * initialBallSpeed;
+        ballSpeedY = (Math.random() * 2 - 1) * 0.1;
+    }
+
+    // Animation loop
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // Move ball
+        ball.position.x += ballSpeedX;
+        ball.position.y += ballSpeedY;
+
+        // Ball vertical boundaries
+        if (ball.position.y >= 4 || ball.position.y <= -4) {
+            ballSpeedY *= -1;
+        }
+
+        // Reset ball when it gets past paddles
+        if (ball.position.x > 9 || ball.position.x < -9) {
+            resetBall();
+        }
+
+        // Paddle collision detection
+        const paddleHeight = paddleGeometry.parameters.height / 2;
+
+        if (ball.position.x <= leftPaddle.position.x + 0.4 &&
+            ball.position.x >= leftPaddle.position.x &&
+            ball.position.y <= leftPaddle.position.y + paddleHeight &&
+            ball.position.y >= leftPaddle.position.y - paddleHeight) {
+            ball.position.x = leftPaddle.position.x + 0.4; // Prevent ball from getting stuck
+            ballSpeedX = Math.abs(ballSpeedX);
+            // Add some spin based on where the ball hits the paddle
+            ballSpeedY += (ball.position.y - leftPaddle.position.y) * 0.1;
+        }
+
+        if (ball.position.x >= rightPaddle.position.x - 0.4 &&
+            ball.position.x <= rightPaddle.position.x &&
+            ball.position.y <= rightPaddle.position.y + paddleHeight &&
+            ball.position.y >= rightPaddle.position.y - paddleHeight) {
+            ball.position.x = rightPaddle.position.x - 0.4; // Prevent ball from getting stuck
+            ballSpeedX = -Math.abs(ballSpeedX);
+            // Add some spin based on where the ball hits the paddle
+            ballSpeedY += (ball.position.y - rightPaddle.position.y) * 0.1;
+        }
+
+        // Automated paddle movement
+        leftPaddle.position.y += paddleSpeed * paddleDirection;
+        rightPaddle.position.y = leftPaddle.position.y;
+
+        if (leftPaddle.position.y >= 3 || leftPaddle.position.y <= -3) {
+            paddleDirection *= -1;
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Start animation
+    resetBall();
+    animate();
+</script>
 </body>
 </html>
