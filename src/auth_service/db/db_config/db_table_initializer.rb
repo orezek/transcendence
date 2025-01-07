@@ -12,8 +12,10 @@ class DbTableInitializer
   end
 
   def setup_tables
+    puts "Creating tables..."
     create_users_table
     create_user_sessions_table
+    puts "Tables created"
   end
 
   private
@@ -29,6 +31,7 @@ class DbTableInitializer
       DateTime :updated_at, default: Sequel::CURRENT_TIMESTAMP
       Boolean :active, default: true
     end
+    puts "Users table created"
   end
 
   def create_user_sessions_table
@@ -42,5 +45,6 @@ class DbTableInitializer
       DateTime :expires_at, default: Sequel.lit("(CURRENT_TIMESTAMP + interval '7 days')")
       Boolean :revoked, default: false
     end
+    puts "Sessions table created"
   end
 end

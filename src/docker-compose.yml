@@ -1,22 +1,25 @@
 services:
   ruby-service:
+    depends_on:
+      db-service:
+          condition: service_healthy
     build:
-      context: ./auth_service
-      dockerfile: Dockerfile
+      context: ./auth_service/app
+      dockerfile: ./docker/Dockerfile
     container_name: auth_service
     environment:
       - PROFILE=${PROFILE:-default}  # Default to 'default' profile if PROFILES is not set
     ports:
       - "1234:1234"
     volumes:
-      - ./auth_service:/usr/src/app
+      - ./auth_service:/usr/src/auth_service
     networks:
       - transcendence
 
   proxy-service:
     build:
       context: ./proxy_service
-      dockerfile: Dockerfile
+      dockerfile: ./Dockerfile
     container_name: proxy_service
     ports:
       - "80:80"
@@ -30,7 +33,7 @@ services:
 
   db-service:
     build:
-      context: ./db_service
+      context: ./auth_service/db/docker
       dockerfile: Dockerfile
     container_name: db_service
     ports:
@@ -47,6 +50,11 @@ services:
       # - ./db_service/init:/docker-entrypoint-initdb.d
     networks:
       - transcendence
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   swagger-ui:
     image: swaggerapi/swagger-ui:3.18.2

@@ -4,7 +4,7 @@ require 'pg'
 require 'sequel'
 require 'bcrypt'
 require './utils/jwt_manager'
-require './db_config/db_setup'
+require '../db/db_config/db_setup'
 
 class AuthService < Sinatra::Base
   ACCESS_TOKEN_VALIDITY = 60 # 1 minute

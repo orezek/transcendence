@@ -1,5 +1,5 @@
 require_relative './db_connector'
-require_relative 'db_table_initializer'
+require_relative './db_table_initializer'
 
 class DBSetup
   attr_reader :db
@@ -22,6 +22,6 @@ class DBSetup
   end
   # dynamic import - funny and + it becomes globally accessible
   def load_models
-    Dir[File.join(__dir__, '../models/*rb')].each { |file| require file }
+    Dir[File.join(__dir__, '../db_models/*rb')].each { |file| require file }
   end
 end
