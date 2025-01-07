@@ -1,7 +1,7 @@
 services:
-  ruby-service:
+  auth-service:
     depends_on:
-      db-service:
+      auth-db-service:
           condition: service_healthy
     build:
       context: ./auth_service/app
@@ -31,27 +31,24 @@ services:
       - transcendence
     restart: always
 
-  db-service:
+  auth-db-service:
     build:
       context: ./auth_service/db/docker
       dockerfile: Dockerfile
-    container_name: db_service
+    container_name: auth-db_service
     ports:
       - "5432:5432"
     restart: always
     environment:
-    # this changes the default postgres superuser credentials and creates a default db
-    # by default the super use does not have a password
-    # use these credentials for CRUD
       POSTGRES_USER: auth_user
       POSTGRES_PASSWORD: securepassword
       POSTGRES_DB: auth_db
-    # volumes:
-      # - ./db_service/init:/docker-entrypoint-initdb.d
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data # named volume
     networks:
       - transcendence
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: [ "CMD-SHELL", "pg_isready -U auth_user -d auth_db" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -64,10 +61,13 @@ services:
     volumes:
       - ./auth_service/openapi.yml:/openapi.yml
     depends_on:
-      - ruby-service
+      - auth-service
     networks:
       - transcendence
 
 networks:
   transcendence:
     driver: bridge
+# named volumes == best practice
+volumes:
+  auth_db_data:

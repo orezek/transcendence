@@ -1,6 +1,6 @@
 development:
   adapter: postgres
-  host: db-service
+  host: auth-db-service
   database: auth_db
   user: auth_user
   password: securepassword
@@ -16,7 +16,7 @@ test:
 
 production:
   adapter: postgres
-  host: db-service
+  host: auth-db-service
   database: auth_db
   user: auth_user
   password: securepassword
