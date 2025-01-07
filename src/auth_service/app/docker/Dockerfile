@@ -13,13 +13,15 @@ RUN gem install bundler && \
     gem install ruby-debug-ide && \
     gem install debase
 
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY ./docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-COPY Gemfile Gemfile.lock ./
+COPY ./Gemfile ./Gemfile.lock /
 RUN bundle install --no-cache
 
-WORKDIR /usr/src/app
+RUN mkdir -p /usr/src/auth_service
+
+WORKDIR /usr/src/auth_service
 
 CMD ["/usr/local/bin/entrypoint.sh"]
 # Set the default command to run the Ruby script
