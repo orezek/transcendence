@@ -53,6 +53,20 @@ services:
       timeout: 5s
       retries: 5
 
+  game-service:
+    build:
+      context: ./game_service/app
+      dockerfile: ./docker/Dockerfile
+    container_name: game_service
+    environment:
+      - PROFILE=${PROFILE:-default}  # Default to 'default' profile if PROFILES is not set
+    ports:
+      - "1235:1235"
+    volumes:
+      - ./game_service:/usr/src/game_service
+    networks:
+      - transcendence
+
   swagger-ui:
     image: swaggerapi/swagger-ui:3.18.2
     environment:
