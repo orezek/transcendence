@@ -1,6 +1,54 @@
 services:
+  # secrets_service - starting service as it will provide all secrets to other services
+  secrets_service:
+    build:
+      context: ./secrets_service
+      dockerfile: ./app/docker/Dockerfile
+    cap_add:
+      - IPC_LOCK
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8200/v1/sys/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      secrets_db_service:
+        condition: service_healthy
+    environment:
+      VAULT_ADDR: 'http://0.0.0.0:8200'
+      VAULT_API_ADDR: 'http://0.0.0.0:8200'
+    ports:
+      - "8200:8200"
+    volumes:
+      - secrets_vault_data:/vault/file
+      - secrets_shared_data:/vault/shared_data
+      - secrets_vault_logs:/vault/logs
+      - secrets_vault_config:/vault/config
+    networks:
+      - transcendence
+    command: server -config=/vault/config/vault.hcl
+
+  secrets_db_service:
+    build:
+      context: ./secrets_service
+      dockerfile: ./db/docker/Dockerfile
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_PASSWORD: rootpassword
+      POSTGRES_USER: postgres
+    volumes:
+      - secrets_db_data:/var/lib/postgresql/data
+    networks:
+      - transcendence
+
   auth-service:
     depends_on:
+      secrets_service:
+        condition: service_healthy
       auth-db-service:
           condition: service_healthy
     build:
@@ -15,23 +63,18 @@ services:
       - ./auth_service:/usr/src/auth_service
     networks:
       - transcendence
-
-  proxy-service:
-    build:
-      context: ./proxy_service
-      dockerfile: ./Dockerfile
-    container_name: proxy_service
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./proxy_service/static:/var/www/proxy_service/static
-      - ../frontend:/var/www/proxy_service/frontend
-    networks:
-      - transcendence
-    restart: always
+# implement health check
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:4567/health"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 3
+#      start_period: 15s
 
   auth-db-service:
+    depends_on:
+      secrets_service:
+          condition: service_healthy
     build:
       context: ./auth_service/db/docker
       dockerfile: Dockerfile
@@ -53,6 +96,24 @@ services:
       timeout: 5s
       retries: 5
 
+  proxy-service:
+    depends_on:
+      - auth-service
+        #condition: service_healthy
+    build:
+      context: ./proxy_service
+      dockerfile: ./Dockerfile
+    container_name: proxy_service
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./proxy_service/static:/var/www/proxy_service/static
+      - ../frontend:/var/www/proxy_service/frontend
+    networks:
+      - transcendence
+    restart: always
+
   swagger-ui:
     image: swaggerapi/swagger-ui:3.18.2
     environment:
@@ -65,9 +126,17 @@ services:
     networks:
       - transcendence
 
+
+
 networks:
   transcendence:
     driver: bridge
-# named volumes == best practice
+# named volumes
 volumes:
   auth_db_data:
+  secrets_db_data:
+  secrets_shared_data: # holds root token
+  secrets_vault_data:
+  secrets_vault_logs:
+  secrets_vault_config:
+

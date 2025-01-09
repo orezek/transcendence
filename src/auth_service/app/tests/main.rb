@@ -1,6 +1,7 @@
 #require './config/db_setup'
 #require './auth_service'
 require_relative './import_data'
+require_relative '' './connect'
 # db = DBSetup.new('test')
 # @db = db.db
 # require 'sequel'
@@ -64,22 +65,51 @@ require_relative './import_data'
 # unless user.valid?
 #   puts user.errors.full_messages
 # end
-import_data = ImportData.new('path/to_file.csv')
-db = import_data.connect_to_db
-import_data.insert_users(db)
-
-user = db[:users].where(id: 5).first # return hash = row of user data
-
-puts user.class
-puts user.methods
-user.each { |key, value| puts "#{key}: #{value}" }
-
-puts user.keys[2].class
-puts user.values[0].class
-
-puts db[:users].class
-users = db[:users]
-puts users.class
-
-puts users.where{email.startswith('bob')}.all
+# import_data = ImportData.new('path/to_file.csv')
+# db = import_data.connect_to_db
+# import_data.insert_users(db)
+#
+# user = db[:users].where(id: 5).first # return hash = row of user data
+#
+# puts user.class
+# puts user.methods
+# user.each { |key, value| puts "#{key}: #{value}" }
+#
+# puts user.keys[2].class
+# puts user.values[0].class
+#
+# puts db[:users].class
+# users = db[:users]
+# puts users.class
+#
+# puts users.where{email.startswith('bob')}.all
 # db[:users].each { |row| row.each { |key, value| puts "#{key}: #{value}" } }
+
+def greet(name)
+  puts "Hello, #{name}!"
+end
+
+greet("John")
+
+def greet_block
+  puts "printing block"
+  puts "Hello, block!"
+  yield
+end
+
+greet_block do
+  puts "Test"
+  puts "ahoj"
+end
+
+greet_block {puts "single line block"}
+
+arr = [1,2,3]
+arr.each {|n| puts n * 10}
+new_arr = arr.map do |n|
+  result = n * 10
+  result    # make sure to return the value you want in the new array
+end
+puts new_arr.class
+
+puts MAGIC_VALUE
