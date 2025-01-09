@@ -113,6 +113,29 @@ services:
       - transcendence
     restart: always
 
+  secrets_init_service:
+    build:
+      context: ./secrets_init_service
+      dockerfile: ./app/docker/Dockerfile
+    volumes:
+      - secrets_shared_data:/vault/shared_data  # To access the root token
+    environment:
+      VAULT_ADDR: http://secrets_service:8200
+    depends_on:
+      secrets_service:
+        condition: service_healthy
+    healthcheck:
+      test: >
+        curl -s --fail --header "X-Vault-Token: $$(cat /vault/shared_data/root_token)" 
+        http://secrets_service:8200/v1/sys/mounts | 
+        jq -e '."secret/" != null'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - transcendence
+
+
   swagger-ui:
     image: swaggerapi/swagger-ui:3.18.2
     environment:
