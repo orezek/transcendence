@@ -18,6 +18,36 @@ class AuthService < Sinatra::Base
   db = DBSetup.new(ENV['RACK_ENV'] || 'development')
   DB = db.db
 
+  # service health check
+  get '/health' do
+    begin
+      # Check database connectivity
+      DB.test_connection
+
+      # Return success response with service details
+      status 200
+      content_type :json
+      {
+        status: 'healthy',
+        service: 'auth-service',
+        timestamp: Time.now.utc.iso8601,
+        database: 'connected'
+      }.to_json
+    rescue Sequel::Error => e
+      # Database connection failed
+      status 503
+      content_type :json
+      {
+        status: 'unhealthy',
+        service: 'auth-service',
+        timestamp: Time.now.utc.iso8601,
+        database: 'disconnected',
+        error: e.message
+      }.to_json
+    end
+  end
+
+
   # Middleware to parse JSON body = before any route processing do this below
   before do
     if request.content_type&.include?('application/json')

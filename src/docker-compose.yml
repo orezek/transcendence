@@ -63,13 +63,12 @@ services:
       - ./auth_service:/usr/src/auth_service
     networks:
       - transcendence
-# implement health check
-#    healthcheck:
-#      test: ["CMD", "curl", "-f", "http://localhost:4567/health"]
-#      interval: 30s
-#      timeout: 10s
-#      retries: 3
-#      start_period: 15s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4567/health"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   auth-db-service:
     depends_on:
@@ -98,8 +97,8 @@ services:
 
   proxy-service:
     depends_on:
-      - auth-service
-        #condition: service_healthy
+      auth-service:
+        condition: service_healthy
     build:
       context: ./proxy_service
       dockerfile: ./Dockerfile
