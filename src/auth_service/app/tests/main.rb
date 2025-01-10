@@ -2,6 +2,7 @@
 #require './auth_service'
 require_relative './import_data'
 require_relative '' './connect'
+require 'vault'
 # db = DBSetup.new('test')
 # @db = db.db
 # require 'sequel'
@@ -85,31 +86,40 @@ require_relative '' './connect'
 # puts users.where{email.startswith('bob')}.all
 # db[:users].each { |row| row.each { |key, value| puts "#{key}: #{value}" } }
 
-def greet(name)
-  puts "Hello, #{name}!"
+# def greet(name)
+#   puts "Hello, #{name}!"
+# end
+#
+# greet("John")
+#
+# def greet_block
+#   puts "printing block"
+#   puts "Hello, block!"
+#   yield
+# end
+#
+# greet_block do
+#   puts "Test"
+#   puts "ahoj"
+# end
+#
+# greet_block {puts "single line block"}
+#
+# arr = [1,2,3]
+# arr.each {|n| puts n * 10}
+# new_arr = arr.map do |n|
+#   result = n * 10
+#   result    # make sure to return the value you want in the new array
+# end
+# puts new_arr.class
+#
+# puts MAGIC_VALUE
+
+Vault.configure do |config|
+  config.address = ENV['VAULT_ADDR'] || 'http://localhost:8200'
+  config.token = 'hvs.Sl1B1E7H7fyCS5OWByoehkzf'
 end
 
-greet("John")
-
-def greet_block
-  puts "printing block"
-  puts "Hello, block!"
-  yield
-end
-
-greet_block do
-  puts "Test"
-  puts "ahoj"
-end
-
-greet_block {puts "single line block"}
-
-arr = [1,2,3]
-arr.each {|n| puts n * 10}
-new_arr = arr.map do |n|
-  result = n * 10
-  result    # make sure to return the value you want in the new array
-end
-puts new_arr.class
-
-puts MAGIC_VALUE
+data = Vault.logical.read('secret/data/test')
+puts data.inspect
+puts data.data[:data][:test_key] unless data.nil?

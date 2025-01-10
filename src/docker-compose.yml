@@ -61,6 +61,7 @@ services:
       - "1234:1234"
     volumes:
       - ./auth_service:/usr/src/auth_service
+      - secrets_shared_data:/vault/shared_data
     networks:
       - transcendence
     healthcheck:
