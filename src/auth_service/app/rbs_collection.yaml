@@ -1,5 +1,0 @@
-gems:
-  - name: sequel
-    ignore: false
-  - name: sinatra
-    ignore: false
