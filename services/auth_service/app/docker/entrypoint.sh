@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /usr/src/auth_service/app
+cd /usr/services/auth_service/app
 echo $(pwd)
 # Check if Gemfile exists
 #if [ -f "Gemfile" ]; then

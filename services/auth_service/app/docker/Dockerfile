@@ -19,7 +19,7 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 COPY ./Gemfile ./Gemfile.lock /
 RUN bundle install --no-cache
 
-RUN mkdir -p /usr/src/auth_service
+RUN mkdir -p /usr/services/auth_service
 
 WORKDIR /usr/src/auth_service
 
