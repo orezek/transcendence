@@ -4,6 +4,7 @@ services:
     build:
       context: ./secrets_service
       dockerfile: ./app/docker/Dockerfile
+    container_name: secrets_service
     cap_add:
       - IPC_LOCK
     healthcheck:
@@ -32,6 +33,7 @@ services:
     build:
       context: ./secrets_service
       dockerfile: ./db/docker/Dockerfile
+    container_name: secrets_db_service
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
@@ -135,6 +137,17 @@ services:
     networks:
       - transcendence
 
+  status_service:
+    build:
+      context: ./status_service
+      dockerfile: status_service/app/Dockerfile
+    volumes:
+      - secrets_shared_data:/vault/shared_data
+    depends_on:
+      secrets_service:
+        condition: service_healthy
+    networks:
+      - transcendence
 
   swagger-ui:
     image: swaggerapi/swagger-ui:3.18.2
