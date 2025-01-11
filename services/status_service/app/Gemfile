@@ -1,12 +1,12 @@
 # Gemfile
 source 'https://rubygems.org'
 
-gem 'bcrypt'
 gem 'json'
 gem 'jwt'
-gem 'pg'
-gem 'puma'
 gem 'rackup'
 gem 'rubocop', group: 'development', require: false
-gem 'sequel'
+gem 'sinatra-websocket'
 gem 'sinatra'
+gem 'thin'
+gem 'ostruct'
+gem 'logger'

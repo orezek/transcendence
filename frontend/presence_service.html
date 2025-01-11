@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Sinatra WebSocket Test</title>
+</head>
+<body>
+<h1>WebSocket Test</h1>
+<input type="text" id="messageInput" placeholder="Type a message" />
+<button id="sendMessage">Send</button>
+<ul id="messages"></ul>
+
+<script>
+    const ws = new WebSocket('ws://localhost:8000/ws');
+    const input = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendMessage');
+    const messagesList = document.getElementById('messages');
+
+    ws.onopen = () => {
+        console.log('Connected to WebSocket');
+        appendMessage('Connected to WebSocket');
+    };
+
+    ws.onmessage = (event) => {
+        console.log('Message from server:', event.data);
+        appendMessage(`Server: ${event.data}`);
+    };
+
+    ws.onerror = (err) => {
+        console.error('WebSocket error:', err);
+        appendMessage('WebSocket error (check console).');
+    };
+
+    ws.onclose = (event) => {
+        console.log(`WebSocket closed: code=${event.code}, reason=${event.reason}`);
+        appendMessage('WebSocket closed.');
+    };
+
+    sendBtn.onclick = () => {
+        const msg = input.value.trim();
+        if (msg) {
+            ws.send(msg);
+            appendMessage(`You: ${msg}`);
+            input.value = '';
+        }
+    };
+
+    function appendMessage(text) {
+        const li = document.createElement('li');
+        li.textContent = text;
+        messagesList.appendChild(li);
+    }
+</script>
+</body>
+</html>

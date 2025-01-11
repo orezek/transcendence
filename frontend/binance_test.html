@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Binance WebSocket Demo</title>
+</head>
+<body>
+<h1>Binance WebSocket Demo</h1>
+<ul id="messages"></ul>
+
+<script>
+    // Connect to the public Binance WebSocket for BTC/USDT trades
+    const binanceWS = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
+
+    binanceWS.onopen = (event) => {
+        console.log('Connected to Binance WebSocket!', event);
+    };
+
+    binanceWS.onmessage = (event) => {
+        // Incoming data is JSON. Parse it to access trade details.
+        const trade = JSON.parse(event.data);
+        console.log('Trade event:', trade);
+
+        // Example of extracting specific data:
+        // price    -> trade.p
+        // quantity -> trade.q
+        // buyer order id -> trade.b
+        // seller order id -> trade.a
+
+        // Display in the page (optional):
+        appendMessage(`Price: ${trade.p}, Quantity: ${trade.q}`);
+    };
+
+    binanceWS.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        appendMessage(`WebSocket error: ${JSON.stringify(error)}`);
+    };
+
+    binanceWS.onclose = (event) => {
+        console.log(`WebSocket closed: Code ${event.code}, Reason: ${event.reason}`);
+        appendMessage('WebSocket closed');
+    };
+
+    // Helper function to append messages to the page
+    function appendMessage(message) {
+        const messagesList = document.getElementById('messages');
+        const li = document.createElement('li');
+        li.textContent = message;
+        messagesList.appendChild(li);
+    }
+</script>
+</body>
+</html>
