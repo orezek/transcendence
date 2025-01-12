@@ -6,7 +6,7 @@ class ExpiredTokenError < StandardError; end
 
 class JwtManager
 
-  PASSWORD_TOKEN = File.read('/vault/shared_data/password_manager_token').strip
+  PASSWORD_TOKEN = File.read('/vault/shared_data/password_manager_token').strip || 'aslfsajdflaskdfjasldkf'
   def initialize
     Vault.configure do |config|
       config.address = ENV['VAULT_ADDR'] || 'http://secrets_service:8200'

@@ -37,7 +37,7 @@ PASSWORD_MANAGER=$(curl --header "X-Vault-Token: $VAULT_TOKEN" \
 
 # Save the token to shared volume
 echo $PASSWORD_MANAGER > /vault/shared_data/password_manager_token
-chmod 600 /vault/shared_data/password_manager_token
+chmod 666 /vault/shared_data/password_manager_token
 
 # Save JWT secret key
 echo "Storing a JWT secret..."

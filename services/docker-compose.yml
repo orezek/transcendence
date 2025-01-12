@@ -55,12 +55,12 @@ services:
           condition: service_healthy
     build:
       context: ./auth_service/app
-      dockerfile: ./docker/Dockerfile
+      dockerfile: Dockerfile
     container_name: auth_service
     environment:
       - PROFILE=${PROFILE:-default}  # Default to 'default' profile if PROFILES is not set
     ports:
-      - "1234:1234"
+      - "4567:1234"
     volumes:
       - ./auth_service:/usr/services/auth_service
       - secrets_shared_data:/vault/shared_data
@@ -139,8 +139,8 @@ services:
 
   status_service:
     build:
-      context: ./status_service
-      dockerfile: status_service/app/Dockerfile
+      context: ./status_service/app
+      dockerfile: Dockerfile
     volumes:
       - secrets_shared_data:/vault/shared_data
     depends_on:
@@ -148,20 +148,6 @@ services:
         condition: service_healthy
     networks:
       - transcendence
-
-  swagger-ui:
-    image: swaggerapi/swagger-ui:3.18.2
-    environment:
-      - SWAGGER_JSON=/openapi.yml
-      - BASE_URL=/api-docs
-    volumes:
-      - ./auth_service/openapi.yml:/openapi.yml
-    depends_on:
-      - auth-service
-    networks:
-      - transcendence
-
-
 
 networks:
   transcendence:

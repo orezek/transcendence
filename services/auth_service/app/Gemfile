@@ -12,7 +12,3 @@ gem 'rubocop', group: 'development', require: false
 gem 'sequel'
 gem 'sinatra'
 gem 'vault'
-
-# Debugging gems
-gem 'ruby-debug-ide'
-gem 'debase'
