@@ -10,3 +10,5 @@ gem 'sinatra'
 gem 'thin'
 gem 'ostruct'
 gem 'logger'
+#development
+gem 'rerun'

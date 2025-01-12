@@ -30,7 +30,7 @@ end
 # Basic HTTP route for sanity check
 get '/' do
   puts "[DEBUG] Hit the '/' route, normal HTTP response"
-  'Hello from Sinatra!'
+  'Hello from Sinatra with RERUN!'
 end
 
 # WebSocket route
