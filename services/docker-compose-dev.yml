@@ -1,0 +1,24 @@
+services:
+  presence_service:
+    build:
+      context: ./presence_service/app
+      dockerfile: Dockerfile.dev
+    container_name: presence_service
+    volumes:
+      - secrets_shared_data:/vault/shared_data
+      # application data will copied in prod
+      - ./presence_service/app:/presence_service
+#    depends_on:
+#      secrets_service:
+#        condition: service_healthy
+    ports:
+      - "8100:4567"
+    networks:
+      - transcendence
+
+
+networks:
+  transcendence:
+    driver: bridge
+volumes:
+  secrets_shared_data: # holds root token

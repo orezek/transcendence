@@ -1,0 +1,16 @@
+FROM ruby:3.4.1-slim-bookworm
+
+RUN apt-get update && apt-get install -y \
+    ruby-dev \
+    build-essential \
+    libpq-dev \
+    iputils-ping \
+    && rm -rf /var/lib/apt/lists/*
+
+
+COPY Gemfile /
+RUN bundle install --no-cache
+
+WORKDIR /presence_service
+
+CMD ["rerun", "--background", "ruby presence_service.rb"]

@@ -119,6 +119,7 @@ services:
     build:
       context: ./secrets_init_service/app
       dockerfile: Dockerfile
+    container_name: secrets_init_service
     volumes:
       - secrets_shared_data:/vault/shared_data  # To access the root token
     environment:
@@ -141,6 +142,7 @@ services:
     build:
       context: ./presence_service/app
       dockerfile: Dockerfile
+    container_name: presence_service
     volumes:
       - secrets_shared_data:/vault/shared_data
     depends_on:
