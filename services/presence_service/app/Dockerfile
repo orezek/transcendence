@@ -19,10 +19,10 @@ RUN groupadd --system --gid 1001 app_user && \
 WORKDIR /status_service
 
 # Copy application code
-COPY --chown=app_user:app_user ./status_service.rb ./status_service.rb
+COPY --chown=app_user:app_user ./presence_service.rb ./presence_service.rb
 
 # Switch to non-root user
 USER app_user:app_user
 
 # Start the application
-CMD ["bundle", "exec", "ruby", "status_service.rb"]
+CMD ["bundle", "exec", "ruby", "presence_service.rb"]

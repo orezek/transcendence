@@ -2,8 +2,8 @@ services:
   # secrets_service - starting service as it will provide all secrets to other services
   secrets_service:
     build:
-      context: ./secrets_service
-      dockerfile: ./app/docker/Dockerfile
+      context: ./secrets_service/app
+      dockerfile: Dockerfile
     container_name: secrets_service
     cap_add:
       - IPC_LOCK
@@ -32,7 +32,7 @@ services:
   secrets_db_service:
     build:
       context: ./secrets_service
-      dockerfile: ./db/docker/Dockerfile
+      dockerfile: ./db/Dockerfile
     container_name: secrets_db_service
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
@@ -62,7 +62,6 @@ services:
     ports:
       - "4567:1234"
     volumes:
-      - ./auth_service:/usr/services/auth_service
       - secrets_shared_data:/vault/shared_data
     networks:
       - transcendence
@@ -77,7 +76,7 @@ services:
       secrets_service:
           condition: service_healthy
     build:
-      context: ./auth_service/db/docker
+      context: ./auth_service/db
       dockerfile: Dockerfile
     container_name: auth-db_service
     ports:
@@ -108,6 +107,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
+  # bind volumes but it will be changed to named volumes after development phase
     volumes:
       - ./proxy_service/static:/var/www/proxy_service/static
       - ../frontend:/var/www/proxy_service/frontend
@@ -117,8 +117,8 @@ services:
 
   secrets_init_service:
     build:
-      context: ./secrets_init_service
-      dockerfile: ./app/docker/Dockerfile
+      context: ./secrets_init_service/app
+      dockerfile: Dockerfile
     volumes:
       - secrets_shared_data:/vault/shared_data  # To access the root token
     environment:
@@ -137,15 +137,17 @@ services:
     networks:
       - transcendence
 
-  status_service:
+  presence_service:
     build:
-      context: ./status_service/app
+      context: ./presence_service/app
       dockerfile: Dockerfile
     volumes:
       - secrets_shared_data:/vault/shared_data
     depends_on:
       secrets_service:
         condition: service_healthy
+    ports:
+      - "8000:4567"
     networks:
       - transcendence
 
