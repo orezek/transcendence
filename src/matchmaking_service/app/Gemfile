@@ -2,15 +2,13 @@
 
 # Gemfile
 source 'https://rubygems.org'
-gem 'bcrypt'
+gem 'em-websocket'
 gem 'json'
-gem 'jwt'
-gem 'pg'
-gem 'puma'
-gem 'rackup'
-gem 'rubocop', group: 'development', require: false
-gem 'sequel'
+gem 'securerandom'
 gem 'sinatra'
+gem 'thin'
+gem 'net-http'
+gem 'uri'
 gem 'rerun'
 
 # Debugging gems

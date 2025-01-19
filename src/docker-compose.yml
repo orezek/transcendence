@@ -53,6 +53,20 @@ services:
       timeout: 5s
       retries: 5
 
+  matchmaking-service:
+    build:
+      context: ./matchmaking_service/app
+      dockerfile: ./docker/Dockerfile
+    container_name: matchmaking_service
+    environment:
+      - PROFILE=${PROFILE:-default}  # Default to 'default' profile if PROFILES is not set
+    ports:
+      - "1236:1236"
+    volumes:
+      - ./matchmaking_service:/usr/src/matchmaking_service
+    networks:
+      - transcendence
+
   game-service:
     build:
       context: ./game_service/app

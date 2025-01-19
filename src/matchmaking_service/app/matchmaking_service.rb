@@ -1,4 +1,3 @@
-module PongGame
   class Application
     class << self
       def start
@@ -26,38 +25,11 @@ module PongGame
       def start_server
         server = Server.new
         server.start
-        puts 'Both servers started!'
+        puts 'Server started!'
         puts ' -> REST API running on port 4567'
         puts ' -> WebSocket running on port 8080'
       end
     end
   end
-end
 
-# Using Sinatra for REST API
-require 'sinatra'
-require 'json'
-class ApiEndpoints < Sinatra::Base
-  set :bind, '0.0.0.0'
-  set :port, 4567
-
-  def initialize
-    super
-  end
-
-  post '/games/new_game' do
-    content_type :json
-    request_payload = JSON.parse(request.body.read)
-
-    # Create game room logic here
-    # room = GameRoom.new(
-    #   player1_id: request_payload['player1_id'],
-    #   player2_id: request_payload['player2_id']
-    # )
-    game_id = 999
-    status 201
-    { room_id: game_id }.to_json
-  end
-end
-
-PongGame::Application.start
+Application.start

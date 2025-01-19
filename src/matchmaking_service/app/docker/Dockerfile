@@ -19,8 +19,8 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 COPY ./Gemfile ./Gemfile.lock  /
 RUN bundle install
 
-RUN mkdir -p /usr/src/game_service
+RUN mkdir -p /usr/src/matchmaking_service
 
-WORKDIR /usr/src/game_service
+WORKDIR /usr/src/matchmaking_service
 
 CMD ["/usr/local/bin/entrypoint.sh"]

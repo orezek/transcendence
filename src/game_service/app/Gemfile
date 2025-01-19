@@ -5,6 +5,9 @@ source 'https://rubygems.org'
 gem 'em-websocket'
 gem 'json'
 gem 'securerandom'
+gem 'sinatra'
+gem 'thin'
+gem 'rerun'
 
 # Debugging gems
 gem 'ruby-debug-ide'

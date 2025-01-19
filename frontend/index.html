@@ -1,266 +1,302 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- [Previous head and style sections remain exactly the same] -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PONG - Classic Arcade Game</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>Pong Game</title>
     <style>
-        /* [Previous styles remain exactly the same] */
         body {
-            background-color: black;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #1a1a1a;
+            font-family: Arial, sans-serif;
             color: white;
-            overflow: hidden;
-            font-family: 'Arial', sans-serif;
         }
-        .navbar {
-            background-color: rgba(0, 0, 0, 0.9) !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 1rem 0;
-        }
-        .title-section {
-            position: absolute;
-            top: 100px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            z-index: 10;
-        }
-        .main-title {
-            font-family: 'Courier New', monospace;
-            font-size: 6rem;
-            letter-spacing: 1rem;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+
+        h1 {
+            font-size: 2.5rem;
             margin-bottom: 1rem;
         }
-        .cta-section {
-            position: fixed;
-            bottom: 50px;
-            left: 0;
-            right: 0;
-            z-index: 10;
+
+        #gameContainer {
+            position: relative;
         }
-        .btn-custom {
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: bold;
-            padding: 12px 0;
-            height: 48px;
-            transition: all 0.3s ease;
+
+        #gameCanvas {
+            border: 4px solid white;
+            border-radius: 8px;
+            background-color: black;
+        }
+
+        #statusMessage {
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 4px;
+            background-color: #333;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        #controls {
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        #playAgainButtons {
+            display: none;
+            margin-top: 1rem;
+            gap: 1rem;
+        }
+
+        .button {
+            padding: 10px 20px;
+            margin: 0 5px;
             border: none;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-            border-radius: 25px;
-            width: 90vw;
-            max-width: 200px;
-            line-height: 1;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
         }
 
-        /* Responsive adjustments */
-        @media (max-width: 576px) {
-            .btn-custom {
-                width: 80vw;
-                max-width: none;
-                margin: 5px;
-                padding: 12px 30px;
-            }
+        .button-yes {
+            background-color: #4CAF50;
+            color: white;
         }
 
-        @media (max-width: 320px) {
-            .btn-custom {
-                width: 90vw;
-                font-size: 0.9rem;
-                padding: 10px 20px;
-            }
+        .button-no {
+            background-color: #f44336;
+            color: white;
         }
-        .btn-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
-        }
-        .btn-play {
-            background: linear-gradient(45deg, #00ff87, #60efff);
-            color: black;
-            font-size: 1.2rem;
-        }
-        .btn-login {
-            background: linear-gradient(45deg, #0061ff, #60efff);
-        }
-        .btn-register {
-            background: linear-gradient(45deg, #ff00a8, #ff446c);
-        }
-        canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1;
+
+        .button:hover {
+            opacity: 0.9;
         }
     </style>
 </head>
 <body>
-<!-- [Previous HTML body content remains exactly the same] -->
-<!-- Bootstrap Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark fixed-top">
-    <div class="container">
-        <a class="navbar-brand fs-4" href="#">
-            <i class="fas fa-table-tennis-paddle-ball"></i>PONG
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="#">About</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Leaderboard</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Support</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
-
-<!-- Background Canvas -->
-<canvas id="bg-canvas"></canvas>
-
-<!-- Main Title -->
-<div class="title-section">
-    <h1 class="main-title">PONG</h1>
-    <p class="lead text-light opacity-75">The Classic Arcade Game in 42 style</p>
+<h1>Pong Game</h1>
+<div id="statusMessage">Connecting to matchmaking server...</div>
+<div id="gameContainer">
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
 </div>
-
-<!-- Call to Action Section -->
-<div class="cta-section text-center">
-    <div class="mt-3 d-flex justify-content-center align-items-center gap-3">
-        <button class="btn btn-custom btn-login d-flex align-items-center justify-content-center">
-            <i class="fas fa-sign-in-alt me-2"></i>
-            <span>Login</span>
-        </button>
-        <button class="btn btn-custom btn-register d-flex align-items-center justify-content-center">
-            <i class="fas fa-user-plus me-2"></i>
-            <span>Register</span>
-        </button>
+<div id="controls">
+    <p>Controls: ⬆️ Up Arrow | ⬇️ Down Arrow</p>
+    <p id="scoreDisplay"></p>
+    <div id="playAgainButtons">
+        <button class="button button-yes" onclick="handlePlayAgain(true)">Yes, Play Again!</button>
+        <button class="button button-no" onclick="handlePlayAgain(false)">No, Exit</button>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Three.js setup
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({
-        canvas: document.querySelector('#bg-canvas'),
-        antialias: true
-    });
+    // Game constants
+    const CANVAS_WIDTH = 800;
+    const CANVAS_HEIGHT = 400;
+    const PADDLE_HEIGHT = 60;
+    const PADDLE_WIDTH = 10;
+    const BALL_SIZE = 10;
 
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Game variables
+    let matchmakingConnection = null;
+    let gameConnection = null;
+    let gameState = null;
+    let gameStatus = 'disconnected';
 
-    // Create paddles and ball
-    const paddleGeometry = new THREE.BoxGeometry(0.2, 5, 0.2);
-    const ballGeometry = new THREE.SphereGeometry(0.2, 32, 32);
-    const material = new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.8
-    });
+    // DOM elements
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const statusMessage = document.getElementById('statusMessage');
+    const scoreDisplay = document.getElementById('scoreDisplay');
 
-    const leftPaddle = new THREE.Mesh(paddleGeometry, material);
-    const rightPaddle = new THREE.Mesh(paddleGeometry, material);
-    const ball = new THREE.Mesh(ballGeometry, material);
+    // Initialize matchmaking WebSocket connection
+    function initializeMatchmaking() {
+        matchmakingConnection = new WebSocket('ws://localhost/matchmaking/ws');
 
-    // Position elements
-    leftPaddle.position.x = -8;
-    rightPaddle.position.x = 8;
-    camera.position.z = 15;
+        matchmakingConnection.onopen = () => {
+            updateStatus('connected', 'Connected to matchmaking server');
+        };
 
-    scene.add(leftPaddle);
-    scene.add(rightPaddle);
-    scene.add(ball);
+        matchmakingConnection.onclose = () => {
+            if (gameStatus !== 'playing') {
+                updateStatus('disconnected', 'Disconnected from matchmaking server');
+                // setTimeout(initializeMatchmaking, 3000);
+            }
+        };
 
-    // Animation variables
-    let ballSpeedX = 0.15;
-    let ballSpeedY = 0.1;
-    let paddleSpeed = 0.05;
-    let paddleDirection = 1;
-    const initialBallSpeed = 0.15;
-
-    // Function to reset ball position
-    function resetBall() {
-        ball.position.set(0, 0, 0);
-        // Randomize initial direction
-        ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * initialBallSpeed;
-        ballSpeedY = (Math.random() * 2 - 1) * 0.1;
+        matchmakingConnection.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            handleMatchmakingMessage(data);
+        };
     }
 
-    // Animation loop
-    function animate() {
-        requestAnimationFrame(animate);
+    // Initialize game WebSocket connection
+    function initializeGameConnection(gameId) {
+        gameConnection = new WebSocket('ws://localhost/game/ws');
 
-        // Move ball
-        ball.position.x += ballSpeedX;
-        ball.position.y += ballSpeedY;
+        gameConnection.onopen = () => {
+            gameConnection.send(JSON.stringify({
+                action: 'join_game',
+                game_id: gameId
+            }));
 
-        // Ball vertical boundaries
-        if (ball.position.y >= 4 || ball.position.y <= -4) {
-            ballSpeedY *= -1;
-        }
+            if (matchmakingConnection) {
+                matchmakingConnection.close();
+                matchmakingConnection = null;
+            }
+        };
 
-        // Reset ball when it gets past paddles
-        if (ball.position.x > 9 || ball.position.x < -9) {
-            resetBall();
-        }
+        gameConnection.onclose = () => {
+            updateStatus('disconnected', 'Disconnected from game server');
+            gameState = null;
+            if (gameStatus === 'game_over') {
+                // If game is over, reconnect to matchmaking
+                // setTimeout(initializeMatchmaking, 3000);
+            }
+        };
 
-        // Paddle collision detection
-        const paddleHeight = paddleGeometry.parameters.height / 2;
-
-        if (ball.position.x <= leftPaddle.position.x + 0.4 &&
-            ball.position.x >= leftPaddle.position.x &&
-            ball.position.y <= leftPaddle.position.y + paddleHeight &&
-            ball.position.y >= leftPaddle.position.y - paddleHeight) {
-            ball.position.x = leftPaddle.position.x + 0.4; // Prevent ball from getting stuck
-            ballSpeedX = Math.abs(ballSpeedX);
-            // Add some spin based on where the ball hits the paddle
-            ballSpeedY += (ball.position.y - leftPaddle.position.y) * 0.1;
-        }
-
-        if (ball.position.x >= rightPaddle.position.x - 0.4 &&
-            ball.position.x <= rightPaddle.position.x &&
-            ball.position.y <= rightPaddle.position.y + paddleHeight &&
-            ball.position.y >= rightPaddle.position.y - paddleHeight) {
-            ball.position.x = rightPaddle.position.x - 0.4; // Prevent ball from getting stuck
-            ballSpeedX = -Math.abs(ballSpeedX);
-            // Add some spin based on where the ball hits the paddle
-            ballSpeedY += (ball.position.y - rightPaddle.position.y) * 0.1;
-        }
-
-        // Automated paddle movement
-        leftPaddle.position.y += paddleSpeed * paddleDirection;
-        rightPaddle.position.y = leftPaddle.position.y;
-
-        if (leftPaddle.position.y >= 3 || leftPaddle.position.y <= -3) {
-            paddleDirection *= -1;
-        }
-
-        renderer.render(scene, camera);
+        gameConnection.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            handleGameMessage(data);
+        };
     }
 
-    // Handle window resize
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+    // Handle matchmaking messages
+    function handleMatchmakingMessage(data) {
+        switch (data.status) {
+            case 'waiting':
+                updateStatus('waiting', 'Waiting for opponent...');
+                break;
+            case 'game_found':
+                updateStatus('connecting', 'Game found! Connecting to game server...');
+                initializeGameConnection(data.game_id);
+                break;
+        }
+    }
 
-    // Start animation
-    resetBall();
-    animate();
+    // Handle game messages
+    function handleGameMessage(data) {
+        switch (data.status) {
+            case 'game_started':
+                updateStatus('playing', data.message);
+                document.getElementById('playAgainButtons').style.display = 'none';
+                break;
+            case 'game_update':
+                gameState = data.game_state;
+                drawGame();
+                updateScore();
+                break;
+            case 'game_over':
+                updateStatus('game_over', `Game Over! ${data.message}`);
+                if (gameConnection) {
+                    gameConnection.close();
+                    gameConnection = null;
+                }
+                // Show play again buttons
+                document.getElementById('playAgainButtons').style.display = 'block';
+                break;
+        }
+    }
+
+    // Handle play again choice
+    function handlePlayAgain(playAgain) {
+        if (playAgain) {
+            // Hide play again buttons
+            document.getElementById('playAgainButtons').style.display = 'none';
+            // Start new matchmaking
+            initializeMatchmaking();
+        } else {
+            // Hide play again buttons and show final message
+            document.getElementById('playAgainButtons').style.display = 'none';
+            updateStatus('ended', 'Thanks for playing! Refresh the page to play again.');
+        }
+    }
+
+    // Update game status and message
+    function updateStatus(status, message) {
+        gameStatus = status;
+        statusMessage.textContent = message;
+        statusMessage.style.display = status === 'playing' ? 'none' : 'block';
+    }
+
+    // Draw game state
+    function drawGame() {
+        if (!gameState) return;
+
+        // Clear canvas
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+        // Draw paddles
+        ctx.fillStyle = 'white';
+        Object.values(gameState.players).forEach(player => {
+            const x = player.role === 'player1' ? PADDLE_WIDTH : CANVAS_WIDTH - PADDLE_WIDTH * 2;
+            ctx.fillRect(x, player.position - PADDLE_HEIGHT/2, PADDLE_WIDTH, PADDLE_HEIGHT);
+        });
+
+        // Draw ball
+        if (gameState.ball) {
+            ctx.beginPath();
+            ctx.arc(gameState.ball.x, gameState.ball.y, BALL_SIZE/2, 0, Math.PI * 2);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        // Draw center line
+        ctx.setLineDash([5, 15]);
+        ctx.beginPath();
+        ctx.moveTo(CANVAS_WIDTH/2, 0);
+        ctx.lineTo(CANVAS_WIDTH/2, CANVAS_HEIGHT);
+        ctx.strokeStyle = 'white';
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    // Update score display
+    function updateScore() {
+        if (gameState && gameState.scores) {
+            scoreDisplay.textContent = `Score: ${gameState.scores.player1} - ${gameState.scores.player2}`;
+        }
+    }
+
+    // Handle keyboard controls
+    function handleKeyDown(e) {
+        if (!gameConnection || gameStatus !== 'playing') return;
+
+        let direction = 0;
+        switch (e.key) {
+            case 'ArrowUp':
+                direction = -1;
+                break;
+            case 'ArrowDown':
+                direction = 1;
+                break;
+            default:
+                return;
+        }
+
+        gameConnection.send(JSON.stringify({
+            action: 'move',
+            direction: direction
+        }));
+    }
+
+    // Initialize game
+    function init() {
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+        window.addEventListener('keydown', handleKeyDown);
+        initializeMatchmaking();
+    }
+
+    // Start the game
+    init();
 </script>
 </body>
 </html>
